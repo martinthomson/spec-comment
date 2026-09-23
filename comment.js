@@ -1,5 +1,29 @@
 const PANEL_WIDTH = 600;
 
+function createIcon(doc, name) {
+  const shapes = {
+    close: [["path", { d: "M6 6l12 12M18 6 6 18" }]],
+    view: [
+      ["path", { d: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" }],
+      ["circle", { cx: "12", cy: "12", r: "3" }],
+    ],
+    delete: [["path", { d: "M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3" }]],
+  };
+  const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  svg.classList.add("icon");
+  for (const [tagName, attributes] of shapes[name] || []) {
+    const shape = doc.createElementNS("http://www.w3.org/2000/svg", tagName);
+    for (const [attribute, value] of Object.entries(attributes)) {
+      shape.setAttribute(attribute, value);
+    }
+    svg.append(shape);
+  }
+  return svg;
+}
+
 function findGitHubRepository(doc) {
   for (const link of doc.querySelectorAll("a[href]")) {
     let linkURL;
@@ -74,7 +98,8 @@ export function initCommentButton(doc = document) {
 
   const closeButton = doc.createElement("button");
   closeButton.type = "button";
-  closeButton.textContent = "❌";
+  closeButton.classList.add("icon-button");
+  closeButton.append(createIcon(doc, "close"));
   closeButton.title = "Close comment editor";
   closeButton.setAttribute("aria-label", "Close comment editor");
 
@@ -470,14 +495,16 @@ export function initCommentButton(doc = document) {
 
       const showButton = doc.createElement("button");
       showButton.type = "button";
-      showButton.textContent = "👁️";
+      showButton.classList.add("icon-button");
+      showButton.append(createIcon(doc, "view"));
       showButton.setAttribute("aria-label", "show text");
       showButton.title = "show text";
       showButton.addEventListener("click", () => showCommentText(comment));
 
       const deleteButton = doc.createElement("button");
       deleteButton.type = "button";
-      deleteButton.textContent = "🗑️";
+      deleteButton.classList.add("icon-button");
+      deleteButton.append(createIcon(doc, "delete"));
       deleteButton.setAttribute("aria-label", "delete comment");
       deleteButton.title = "delete comment";
       deleteButton.addEventListener("click", () => {
@@ -522,7 +549,7 @@ export function initCommentButton(doc = document) {
   function layoutPanel() {
     const bodyRect = doc.body.getBoundingClientRect();
     const viewportWidth = doc.defaultView.innerWidth;
-    const panelWidth = Math.min(PANEL_WIDTH, viewportWidth);
+    const panelWidth = panel.getBoundingClientRect().width || Math.min(PANEL_WIDTH, viewportWidth);
     const baseLeft = bodyRect.left - shiftAmount;
     const baseRight = bodyRect.right - shiftAmount;
     const leftMargin = Math.max(0, baseLeft);
@@ -532,7 +559,7 @@ export function initCommentButton(doc = document) {
 
     setShift(canShift ? neededShift : 0);
     adjustToc(shiftAmount);
-    panel.style.left = `${Math.max(0, leftMargin - panelWidth)}px`;
+    panel.style.left = "0px";
   }
 
   function openPanel() {
@@ -603,12 +630,19 @@ export function initCommentButton(doc = document) {
   doc.addEventListener("selectionchange", update);
   doc.defaultView.addEventListener("scroll", reposition, { passive: true });
   doc.defaultView.addEventListener("resize", reposition);
+  const panelResizeObserver = doc.defaultView.ResizeObserver
+    ? new doc.defaultView.ResizeObserver(() => {
+      if (panelOpen) layoutPanel();
+    })
+    : null;
+  panelResizeObserver?.observe(panel);
 
   return () => {
     doc.removeEventListener("selectionchange", update);
     doc.removeEventListener("keydown", onKeyDown, true);
     doc.defaultView.removeEventListener("scroll", reposition);
     doc.defaultView.removeEventListener("resize", reposition);
+    panelResizeObserver?.disconnect();
     for (const type of ["Major Issue", "Minor Issue", "Comment", "Nit"]) {
       const name = `rfc-comment-${type.toLowerCase().replace(/\s+/g, "-")}`;
       doc.defaultView.CSS?.highlights?.delete(name);

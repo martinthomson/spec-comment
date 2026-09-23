@@ -58,6 +58,26 @@
     font: 14px/1.2 sans-serif;
   }
 
+  button.icon-button {
+    display: grid;
+    min-width: 2em;
+    min-height: 2em;
+    padding: 0.25em;
+    place-items: center;
+  }
+
+  .icon {
+    display: block;
+    width: 1.15em;
+    max-width: initial;
+    height: 1.15em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
   button:not(:disabled),
   aside fieldset label {
     cursor: pointer;
@@ -114,11 +134,14 @@
     left: 0;
     box-sizing: border-box;
     width: min(600px, 100vw);
+    min-width: min(300px, 100vw);
+    max-width: 100vw;
     display: none;
     flex-direction: column;
     gap: 12px;
     padding: 16px;
     overflow: auto;
+    resize: horizontal;
     color: var(--text-color, #222);
     background: var(--background-color, #fff);
     border-right: 1px solid var(--line-color, #ccc);
