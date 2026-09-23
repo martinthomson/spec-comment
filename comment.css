@@ -1,0 +1,243 @@
+::highlight(rfc-comment-major-issue) {
+  text-decoration: underline;
+  text-decoration-color: #b96767;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+::highlight(rfc-comment-minor-issue) {
+  text-decoration: underline;
+  text-decoration-color: #c18458;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+::highlight(rfc-comment-comment) {
+  text-decoration: underline;
+  text-decoration-color: #a99b48;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+::highlight(rfc-comment-nit) {
+  text-decoration: underline;
+  text-decoration-color: #668ba8;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+.comment-ui {
+  aside fieldset label[data-type="major-issue"],
+  aside [role="list"] div.major-issue {
+    --type-color: #b96767;
+  }
+
+  aside fieldset label[data-type="minor-issue"],
+  aside [role="list"] div.minor-issue {
+    --type-color: #c18458;
+  }
+
+  aside fieldset label[data-type="comment"],
+  aside [role="list"] div.comment {
+    --type-color: #a99b48;
+  }
+
+  aside fieldset label[data-type="nit"],
+  aside [role="list"] div.nit {
+    --type-color: #668ba8;
+  }
+
+  button,
+  aside fieldset label {
+    appearance: none;
+    padding: 0.3em 0.65em;
+    border: 1px solid #000;
+    border-radius: 3px;
+    color: #000;
+    background: #fff;
+    font: 14px/1.2 sans-serif;
+  }
+
+  button:not(:disabled),
+  aside fieldset label {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  button:focus-visible,
+  aside fieldset label:focus-within {
+    outline: 2px solid #000;
+    outline-offset: 2px;
+  }
+
+  aside > textarea + button,
+  aside fieldset label.is-selected {
+    color: #fff;
+    background: #000;
+  }
+
+  button:hover:not(:disabled) {
+    background: #eee;
+  }
+
+  aside > textarea + button:hover:not(:disabled),
+  aside fieldset label.is-selected:hover {
+    background: #333;
+  }
+
+  [data-rfc-comment-button],
+  [data-comment-list-button] {
+    position: fixed;
+    z-index: 10;
+    display: none;
+  }
+
+  [data-rfc-comment-button].is-visible,
+  [data-comment-list-button].is-visible {
+    display: block;
+  }
+
+  [data-comment-list-button] {
+    top: 8px;
+    left: 8px;
+  }
+
+  aside {
+    position: fixed;
+    z-index: 11;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    box-sizing: border-box;
+    width: min(600px, 100vw);
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    overflow: auto;
+    color: var(--text-color, #222);
+    background: var(--background-color, #fff);
+    border-right: 1px solid var(--line-color, #ccc);
+    box-shadow: 2px 0 12px rgb(0 0 0 / 18%);
+    font: 16px/1.4 sans-serif;
+
+    &.is-open {
+      display: flex;
+    }
+
+    > header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+
+      h2 {
+        min-width: 0;
+        margin: 0;
+        overflow-wrap: anywhere;
+        font: inherit;
+        font-size: 1.25em;
+        font-weight: 600;
+      }
+
+      button {
+        flex: none;
+      }
+    }
+
+    > fieldset {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+
+      label {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: inset 0 -3px var(--type-color, #000);
+
+        &.is-selected {
+          border-color: var(--type-color, #000);
+        }
+      }
+
+      input[type="radio"] {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      span {
+        pointer-events: none;
+      }
+    }
+
+    > textarea {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 10em;
+      resize: vertical;
+      font: inherit;
+
+      + button {
+        align-self: flex-end;
+      }
+    }
+
+    > footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--line-color, #ccc);
+    }
+
+    [role="list"] {
+      > div {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px 0 8px 8px;
+        border-left: 3px solid var(--type-color, transparent);
+
+        header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+
+        pre {
+          margin: 0;
+          white-space: pre-wrap;
+          overflow-wrap: anywhere;
+          font: inherit;
+        }
+
+        [role="group"] {
+          display: flex;
+          gap: 8px;
+        }
+      }
+    }
+  }
+
+  [data-copy-fallback] {
+    position: fixed;
+    top: 0;
+    left: -10000px;
+  }
+}

@@ -1,0 +1,2537 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>WebPush Encryption using Symmetric Ciphers</title>
+<meta content="Martin Thomson" name="author">
+<meta content="
+       This document defines how to use purely symmetric cryptography
+with Web Push. 
+       This document obsoletes RFC 8291. 
+    " name="description">
+<meta content="xml2rfc 3.34.1" name="generator">
+<meta content="spam" name="keyword">
+<meta content="transdimensional annoyance" name="keyword">
+<meta content="perfect forward secrecy" name="keyword">
+<meta content="draft-thomson-webpush-sym-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.34.1
+    Python 3.14.7
+    ConfigArgParse 1.7.7
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.1.3
+    natsort 8.4.0
+    platformdirs 4.11.11
+    pycountry 26.2.16
+    PyYAML 6.0.3
+    requests 2.34.2
+    wcwidth 0.8.4
+-->
+<link href="draft-thomson-webpush-sym.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
+}
+svg {
+  display: block;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
+}
+.alignCenter {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+      float: none;
+    }
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a {
+  text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
+}
+.iref + a[href].internal {
+  color: var(--text-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
+  }
+  @media print {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+  & .prepared {
+    float: right;
+  }
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
+  }
+}
+
+/* Comments */
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
+      }
+    }
+    & a.toplink {
+      float: right;
+    }
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
+    }
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc {
+    page-break-before: always;
+    border-top: none;
+    padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
+}
+</style>
+<link href="comment.css" rel="stylesheet">
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">WebPush Encryption using Symmetric Ciphe</td>
+<td class="right">September 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Thomson</td>
+<td class="center">Expires 27 March 2027</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Web-Based Push Notifications</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-thomson-webpush-sym-latest</dd>
+<dt class="label-obsoletes">Obsoletes:</dt>
+<dd class="obsoletes">
+<a href="https://www.rfc-editor.org/rfc/rfc8291" class="eref">8291</a> (if approved)</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-09-23" class="published">23 September 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Standards Track</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2027-03-27">27 March 2027</time></dd>
+<dt class="label-authors">Author:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">M. Thomson</div>
+<div class="org">Mozilla</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">WebPush Encryption using Symmetric Ciphers</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document defines how to use purely symmetric cryptography
+with Web Push.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">This document obsoletes RFC 8291.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-about-this-document">
+<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        The latest revision of this draft can be found at <span><a href="https://martinthomson.github.io/webpush-hpke/draft-thomson-webpush-hpke.html">https://martinthomson.github.io/webpush-hpke/draft-thomson-webpush-hpke.html</a></span>.
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-thomson-webpush-sym/">https://datatracker.ietf.org/doc/draft-thomson-webpush-sym/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3">
+        Discussion of this document takes place on the
+        Web-Based Push Notifications Working Group mailing list (<span><a href="mailto:webpush@ietf.org">mailto:webpush@ietf.org</a></span>),
+        which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/webpush/">https://mailarchive.ietf.org/arch/browse/webpush/</a></span>.
+        Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/webpush/">https://www.ietf.org/mailman/listinfo/webpush/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
+<p id="section-note.1-4">Source for this draft and an issue tracker can be found at
+        <span><a href="https://github.com/martinthomson/webpush-hpke">https://github.com/martinthomson/webpush-hpke</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 27 March 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-comparison-with-predecessor" class="internal xref">Comparison with Predecessor</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
+                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-encryption-in-web-push" class="internal xref">Encryption in Web Push</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.1">
+                <p id="section-toc.1-1.2.2.1.1"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-ratchet-design" class="internal xref">Ratchet Design</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.2">
+                <p id="section-toc.1-1.2.2.2.1"><a href="#section-2.2" class="auto internal xref">2.2</a>.  <a href="#name-cryptographic-primitives-an" class="internal xref">Cryptographic Primitives and Agility</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.3">
+                <p id="section-toc.1-1.2.2.3.1"><a href="#section-2.3" class="auto internal xref">2.3</a>.  <a href="#name-this-document" class="internal xref">This Document</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-user-agent-configuration" class="internal xref">User Agent Configuration</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-encrypted-push-message-form" class="internal xref">Encrypted Push Message Format</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-push-message-encryption" class="internal xref">Push Message Encryption</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-push-message-receiver-proce" class="internal xref">Push Message Receiver Processing</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-user-agent-state" class="internal xref">User Agent State</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-user-agent-duplicate-detect" class="internal xref">User Agent Duplicate Detection</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-simple-decryption-algorithm" class="internal xref">Simple Decryption Algorithm</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4">
+                <p id="section-toc.1-1.6.2.4.1"><a href="#section-6.4" class="auto internal xref">6.4</a>.  <a href="#name-implementation-notes" class="internal xref">Implementation Notes</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-rekeying" class="internal xref">Rekeying</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-upgrading-from-rfc-8291" class="internal xref">Upgrading from RFC 8291</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-traffic-analysis" class="internal xref">Traffic Analysis</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-secret-compromise" class="internal xref">Secret Compromise</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3">
+                <p id="section-toc.1-1.9.2.3.1"><a href="#section-9.3" class="auto internal xref">9.3</a>.  <a href="#name-key-and-nonce-collisions" class="internal xref">Key and Nonce Collisions</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.4">
+                <p id="section-toc.1-1.9.2.4.1"><a href="#section-9.4" class="auto internal xref">9.4</a>.  <a href="#name-secret-and-key-usage" class="internal xref">Secret and Key Usage</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.5">
+                <p id="section-toc.1-1.9.2.5.1"><a href="#section-9.5" class="auto internal xref">9.5</a>.  <a href="#name-handling-denial-of-service" class="internal xref">Handling Denial of Service</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.6">
+                <p id="section-toc.1-1.9.2.6.1"><a href="#section-9.6" class="auto internal xref">9.6</a>.  <a href="#name-media-type-security" class="internal xref">Media Type Security</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1">
+                <p id="section-toc.1-1.11.2.1.1"><a href="#section-11.1" class="auto internal xref">11.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2">
+                <p id="section-toc.1-1.11.2.2.1"><a href="#section-11.2" class="auto internal xref">11.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">Message Encryption for Web Push <span>[<a href="#RFC8291" class="cite xref">RFC8291</a>]</span>
+defines a hybrid encryption system
+that depends on elliptic curve cryptography.
+This system is known to be vulnerable to compromise
+in the event that a cryptographically-relevant quantum computer (CRQC)
+is created.
+The risk of this resulting in the compromise of Web Push encryption
+will be increasingly likely as time passes <span>[<a href="#PQC-GUIDE" class="cite xref">PQC-GUIDE</a>]</span>.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">This document defines a message encryption design
+that uses purely symmetric algorithms,
+relying on a pre-shared symmetric key.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">This process uses a ratcheting key derivation process
+to protect the confidentiality of old messages
+in the event of key compromise (namely, forward secrecy or FS).
+Critically, it does not protect messages that might be sent after
+any such compromise (that is, post-compromise security or PCS).<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">This document obsoletes RFC 8291 <span>[<a href="#RFC8291" class="cite xref">RFC8291</a>]</span>.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<div id="comparison-with-predecessor">
+<section id="section-1.1">
+        <h3 id="name-comparison-with-predecessor">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-comparison-with-predecessor" class="section-name selfRef">Comparison with Predecessor</a>
+        </h3>
+<p id="section-1.1-1">The security properties of this mechanism differ
+from the system that it replaces <span>[<a href="#RFC8291" class="cite xref">RFC8291</a>]</span>.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<p id="section-1.1-2">RFC 8291 encryption had application servers generate ephemeral asymmetric keys
+for every message.
+That guaranteed that only a compromise of the secret key held by a client --
+or a break in the underlying cryptography --
+would compromise future messages.<a href="#section-1.1-2" class="pilcrow">¶</a></p>
+<p id="section-1.1-3">The need to safeguard against the potential creation of a CRQC
+leads to one of two conclusions:
+upgrade the cryptographic algorithms used
+or switch to purely symmetric ciphers.
+<span>[<a href="#WEBPUSH-HPKE" class="cite xref">WEBPUSH-HPKE</a>]</span> explores the former option,
+which comes at a very high cost in added bytes.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
+<p id="section-1.1-4">Post-quantum key encapsulation would add overheads to every message
+that exceed typical message sizes,
+which are exchanged over a medium that is highly constrained.<a href="#section-1.1-4" class="pilcrow">¶</a></p>
+<p id="section-1.1-5">Though push messaging is highly sensitive to added bytes,
+it is less needful of protection than other protocols
+as it uses TLS to protect every communication step.
+Push message encryption provides an essential layer of end-to-end protection
+to address confidentiality and integrity with respect to the push service.<a href="#section-1.1-5" class="pilcrow">¶</a></p>
+<p id="section-1.1-6">Using purely symmetric encryption creates new vulnerabilities over RFC 8291.
+An RFC 8291 application server did not hold secrets;
+every message they created was encrypted with an ephemeral key.
+A design based on symmetric cryptography only
+means that compromising the shared secret
+will result in a malicious push service:<a href="#section-1.1-6" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1.1-7.1">
+            <p id="section-1.1-7.1.1">being able to read any message sent by the application server<a href="#section-1.1-7.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.1-7.2">
+            <p id="section-1.1-7.2.1">being able to modify those messages<a href="#section-1.1-7.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.1-7.3">
+            <p id="section-1.1-7.3.1">being able to forge messages that the user agent will accept<a href="#section-1.1-7.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-1.1-8">This risk can be managed by requesting fresh secrets from the user agent
+more often; see <a href="#rekey" class="auto internal xref">Section 7</a>.<a href="#section-1.1-8" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="conventions-and-definitions">
+<section id="section-1.2">
+        <h3 id="name-conventions-and-definitions">
+<a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+        </h3>
+<p id="section-1.2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+<p id="section-1.2-2">This document uses terminology introduced in <span>[<a href="#WEBPUSH" class="cite xref">WEBPUSH</a>]</span>.<a href="#section-1.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="encryption-in-web-push">
+<section id="section-2">
+      <h2 id="name-encryption-in-web-push">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-encryption-in-web-push" class="section-name selfRef">Encryption in Web Push</a>
+      </h2>
+<p id="section-2-1">Web Push <span>[<a href="#WEBPUSH" class="cite xref">WEBPUSH</a>]</span> provides a messaging capability
+that allows applications to send small messages
+to user agents via a push service.
+The push service enables efficient message delivery,
+even when user agents have constrained connectivity.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">Typical interactions for Web Push are shown in <a href="#f-overview" class="auto internal xref">Figure 1</a>.<a href="#section-2-2" class="pilcrow">¶</a></p>
+<span id="name-web-push-overview"></span><div id="f-overview">
+<figure id="figure-1">
+        <div id="section-2-3.1">
+          <div class="alignLeft art-svg artwork" id="section-2-3.1.1">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="304" width="472" viewBox="0 0 472 304" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px" stroke-linecap="round">
+              <path d="M 8,32 L 8,64" fill="none" stroke="black"></path>
+              <path d="M 40,72 L 40,176" fill="none" stroke="black"></path>
+              <path d="M 40,208 L 40,272" fill="none" stroke="black"></path>
+              <path d="M 72,32 L 72,64" fill="none" stroke="black"></path>
+              <path d="M 168,32 L 168,64" fill="none" stroke="black"></path>
+              <path d="M 224,72 L 224,128" fill="none" stroke="black"></path>
+              <path d="M 224,208 L 224,272" fill="none" stroke="black"></path>
+              <path d="M 288,32 L 288,64" fill="none" stroke="black"></path>
+              <path d="M 352,32 L 352,64" fill="none" stroke="black"></path>
+              <path d="M 408,72 L 408,176" fill="none" stroke="black"></path>
+              <path d="M 408,208 L 408,272" fill="none" stroke="black"></path>
+              <path d="M 464,32 L 464,64" fill="none" stroke="black"></path>
+              <path d="M 8,32 L 72,32" fill="none" stroke="black"></path>
+              <path d="M 168,32 L 288,32" fill="none" stroke="black"></path>
+              <path d="M 352,32 L 464,32" fill="none" stroke="black"></path>
+              <path d="M 8,64 L 72,64" fill="none" stroke="black"></path>
+              <path d="M 168,64 L 288,64" fill="none" stroke="black"></path>
+              <path d="M 352,64 L 464,64" fill="none" stroke="black"></path>
+              <path d="M 48,110 L 216,110" fill="none" stroke="black"></path>
+              <path d="M 48,114 L 216,114" fill="none" stroke="black"></path>
+              <path d="M 48,160 L 400,160" fill="none" stroke="black"></path>
+              <path d="M 8,192 Q 10,188.8 12,192 Q 14,195.2 16,192 Q 18,188.8 20,192 Q 22,195.2 24,192 Q 26,188.8 28,192 Q 30,195.2 32,192 Q 34,188.8 36,192 Q 38,195.2 40,192 Q 42,188.8 44,192 Q 46,195.2 48,192 Q 50,188.8 52,192 Q 54,195.2 56,192 Q 58,188.8 60,192 Q 62,195.2 64,192 Q 66,188.8 68,192 Q 70,195.2 72,192 Q 74,188.8 76,192 Q 78,195.2 80,192 Q 82,188.8 84,192 Q 86,195.2 88,192 Q 90,188.8 92,192 Q 94,195.2 96,192 Q 98,188.8 100,192 Q 102,195.2 104,192 Q 106,188.8 108,192 Q 110,195.2 112,192 Q 114,188.8 116,192 Q 118,195.2 120,192 Q 122,188.8 124,192 Q 126,195.2 128,192 Q 130,188.8 132,192 Q 134,195.2 136,192 Q 138,188.8 140,192 Q 142,195.2 144,192 Q 146,188.8 148,192 Q 150,195.2 152,192 Q 154,188.8 156,192 Q 158,195.2 160,192 Q 162,188.8 164,192 Q 166,195.2 168,192 Q 170,188.8 172,192 Q 174,195.2 176,192 Q 178,188.8 180,192 Q 182,195.2 184,192" fill="none" stroke="black"></path>
+              <path d="M 264,192 Q 266,188.8 268,192 Q 270,195.2 272,192 Q 274,188.8 276,192 Q 278,195.2 280,192 Q 282,188.8 284,192 Q 286,195.2 288,192 Q 290,188.8 292,192 Q 294,195.2 296,192 Q 298,188.8 300,192 Q 302,195.2 304,192 Q 306,188.8 308,192 Q 310,195.2 312,192 Q 314,188.8 316,192 Q 318,195.2 320,192 Q 322,188.8 324,192 Q 326,195.2 328,192 Q 330,188.8 332,192 Q 334,195.2 336,192 Q 338,188.8 340,192 Q 342,195.2 344,192 Q 346,188.8 348,192 Q 350,195.2 352,192 Q 354,188.8 356,192 Q 358,195.2 360,192 Q 362,188.8 364,192 Q 366,195.2 368,192 Q 370,188.8 372,192 Q 374,195.2 376,192 Q 378,188.8 380,192 Q 382,195.2 384,192 Q 386,188.8 388,192 Q 390,195.2 392,192 Q 394,188.8 396,192 Q 398,195.2 400,192 Q 402,188.8 404,192 Q 406,195.2 408,192 Q 410,188.8 412,192 Q 414,195.2 416,192 Q 418,188.8 420,192 Q 422,195.2 424,192 Q 426,188.8 428,192 Q 430,195.2 432,192 Q 434,188.8 436,192 Q 438,195.2 440,192" fill="none" stroke="black"></path>
+              <path d="M 232,240 L 400,240" fill="none" stroke="black"></path>
+              <path d="M 48,256 L 216,256" fill="none" stroke="black"></path>
+              <polygon class="arrowhead" points="408,160 396,154.4 396,165.6" fill="black" transform="rotate(0,400,160)"></polygon>
+              <polygon class="arrowhead" points="240,240 228,234.4 228,245.6" fill="black" transform="rotate(180,232,240)"></polygon>
+              <polygon class="arrowhead" points="224,112 212,106.4 212,117.6" fill="black" transform="rotate(0,216,112)"></polygon>
+              <polygon class="arrowhead" points="56,256 44,250.4 44,261.6" fill="black" transform="rotate(180,48,256)"></polygon>
+              <polygon class="arrowhead" points="56,112 44,106.4 44,117.6" fill="black" transform="rotate(180,48,112)"></polygon>
+              <g class="text">
+                <text x="36" y="52">UA</text>
+                <text x="196" y="52">Push</text>
+                <text x="248" y="52">Service</text>
+                <text x="408" y="52">Application</text>
+                <text x="128" y="100">Setup</text>
+                <text x="160" y="148">Provide</text>
+                <text x="244" y="148">Subscription</text>
+                <text x="224" y="180">|</text>
+                <text x="224" y="196">(Later)</text>
+                <text x="284" y="228">Push</text>
+                <text x="336" y="228">Message</text>
+                <text x="92" y="244">Push</text>
+                <text x="144" y="244">Message</text>
+              </g>
+            </svg><a href="#section-2-3.1.1" class="pilcrow">¶</a>
+</div>
+</div>
+<figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
+<a href="#name-web-push-overview" class="selfRef">Web Push Overview</a>
+        </figcaption></figure>
+</div>
+<p id="section-2-4">Encryption of push messages ensures that the push service
+is unable to read or alter the messages it handles.<a href="#section-2-4" class="pilcrow">¶</a></p>
+<div id="ratchet-design">
+<section id="section-2.1">
+        <h3 id="name-ratchet-design">
+<a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-ratchet-design" class="section-name selfRef">Ratchet Design</a>
+        </h3>
+<p id="section-2.1-1">The push message encryption design in this document
+uses a very simple ratchet.<a href="#section-2.1-1" class="pilcrow">¶</a></p>
+<p id="section-2.1-2">Each message that is sent by an application server
+takes the shared secret
+and uses a key-derivation function (KDF)
+to produce three new values:<a href="#section-2.1-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-2.1-3">
+<li id="section-2.1-3.1">
+            <p id="section-2.1-3.1.1">A per-message encryption key<a href="#section-2.1-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-2.1-3.2">
+            <p id="section-2.1-3.2.1">A per-message nonce<a href="#section-2.1-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-2.1-3.3">
+            <p id="section-2.1-3.3.1">A fresh secret for the next message<a href="#section-2.1-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-2.1-4">The key and nonce are used with
+an Authenticated Encryption with Associated Data (AEAD) function <span>[<a href="#AEAD" class="cite xref">AEAD</a>]</span>
+to encipher the message.<a href="#section-2.1-4" class="pilcrow">¶</a></p>
+<p id="section-2.1-5">The sequence number is then incremented by one
+and the old secret destroyed.<a href="#section-2.1-5" class="pilcrow">¶</a></p>
+<p id="section-2.1-6">This process is illustrated in <a href="#f-ratchet" class="auto internal xref">Figure 2</a>.<a href="#section-2.1-6" class="pilcrow">¶</a></p>
+<span id="name-message-encryption-ratchet"></span><div id="f-ratchet">
+<figure id="figure-2">
+          <div id="section-2.1-7.1">
+            <div class="alignLeft art-svg artwork" id="section-2.1-7.1.1">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="352" width="528" viewBox="0 0 528 352" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px" stroke-linecap="round">
+                <path d="M 8,32 L 8,64" fill="none" stroke="black"></path>
+                <path d="M 8,224 L 8,256" fill="none" stroke="black"></path>
+                <path d="M 40,64 L 40,144" fill="none" stroke="black"></path>
+                <path d="M 72,64 L 72,96" fill="none" stroke="black"></path>
+                <path d="M 112,32 L 112,64" fill="none" stroke="black"></path>
+                <path d="M 112,224 L 112,256" fill="none" stroke="black"></path>
+                <path d="M 256,304 L 256,336" fill="none" stroke="black"></path>
+                <path d="M 264,208 L 264,272" fill="none" stroke="black"></path>
+                <path d="M 280,176 L 280,200" fill="none" stroke="black"></path>
+                <path d="M 312,128 L 312,200" fill="none" stroke="black"></path>
+                <path d="M 320,32 L 320,64" fill="none" stroke="black"></path>
+                <path d="M 320,304 L 320,336" fill="none" stroke="black"></path>
+                <path d="M 352,64 L 352,112" fill="none" stroke="black"></path>
+                <path d="M 384,64 L 384,104" fill="none" stroke="black"></path>
+                <path d="M 392,304 L 392,336" fill="none" stroke="black"></path>
+                <path d="M 424,32 L 424,64" fill="none" stroke="black"></path>
+                <path d="M 424,256 L 424,296" fill="none" stroke="black"></path>
+                <path d="M 520,304 L 520,336" fill="none" stroke="black"></path>
+                <path d="M 8,32 L 112,32" fill="none" stroke="black"></path>
+                <path d="M 200,32 L 232,32" fill="none" stroke="black"></path>
+                <path d="M 320,32 L 424,32" fill="none" stroke="black"></path>
+                <path d="M 112,48 L 184,48" fill="none" stroke="black"></path>
+                <path d="M 248,48 L 312,48" fill="none" stroke="black"></path>
+                <path d="M 424,48 L 456,48" fill="none" stroke="black"></path>
+                <path d="M 8,64 L 112,64" fill="none" stroke="black"></path>
+                <path d="M 200,64 L 232,64" fill="none" stroke="black"></path>
+                <path d="M 320,64 L 424,64" fill="none" stroke="black"></path>
+                <path d="M 136,96 L 168,96" fill="none" stroke="black"></path>
+                <path d="M 88,112 L 120,112" fill="none" stroke="black"></path>
+                <path d="M 184,112 L 296,112" fill="none" stroke="black"></path>
+                <path d="M 136,128 L 168,128" fill="none" stroke="black"></path>
+                <path d="M 136,144 L 168,144" fill="none" stroke="black"></path>
+                <path d="M 56,160 L 120,160" fill="none" stroke="black"></path>
+                <path d="M 184,160 L 264,160" fill="none" stroke="black"></path>
+                <path d="M 136,176 L 168,176" fill="none" stroke="black"></path>
+                <path d="M 264,208 L 328,208" fill="none" stroke="black"></path>
+                <path d="M 8,224 L 112,224" fill="none" stroke="black"></path>
+                <path d="M 112,240 L 256,240" fill="none" stroke="black"></path>
+                <path d="M 344,240 L 408,240" fill="none" stroke="black"></path>
+                <path d="M 8,256 L 112,256" fill="none" stroke="black"></path>
+                <path d="M 264,272 L 328,272" fill="none" stroke="black"></path>
+                <path d="M 256,304 L 520,304" fill="none" stroke="black"></path>
+                <path d="M 256,336 L 520,336" fill="none" stroke="black"></path>
+                <path d="M 328,208 L 344,240" fill="none" stroke="black"></path>
+                <path d="M 328,272 L 344,240" fill="none" stroke="black"></path>
+                <path d="M 200,32 C 191.16936,32 184,39.16936 184,48" fill="none" stroke="black"></path>
+                <path d="M 232,32 C 240.83064,32 248,39.16936 248,48" fill="none" stroke="black"></path>
+                <path d="M 200,64 C 191.16936,64 184,56.83064 184,48" fill="none" stroke="black"></path>
+                <path d="M 232,64 C 240.83064,64 248,56.83064 248,48" fill="none" stroke="black"></path>
+                <path d="M 136,96 C 127.16936,96 120,103.16936 120,112" fill="none" stroke="black"></path>
+                <path d="M 168,96 C 176.83064,96 184,103.16936 184,112" fill="none" stroke="black"></path>
+                <path d="M 88,112 C 79.16936,112 72,104.83064 72,96" fill="none" stroke="black"></path>
+                <path d="M 296,112 C 304.83064,112 312,119.16936 312,128" fill="none" stroke="black"></path>
+                <path d="M 136,128 C 127.16936,128 120,120.83064 120,112" fill="none" stroke="black"></path>
+                <path d="M 168,128 C 176.83064,128 184,120.83064 184,112" fill="none" stroke="black"></path>
+                <path d="M 136,144 C 127.16936,144 120,151.16936 120,160" fill="none" stroke="black"></path>
+                <path d="M 168,144 C 176.83064,144 184,151.16936 184,160" fill="none" stroke="black"></path>
+                <path d="M 56,160 C 47.16936,160 40,152.83064 40,144" fill="none" stroke="black"></path>
+                <path d="M 264,160 C 272.83064,160 280,167.16936 280,176" fill="none" stroke="black"></path>
+                <path d="M 136,176 C 127.16936,176 120,168.83064 120,160" fill="none" stroke="black"></path>
+                <path d="M 168,176 C 176.83064,176 184,168.83064 184,160" fill="none" stroke="black"></path>
+                <path d="M 408,240 C 416.83064,240 424,247.16936 424,256" fill="none" stroke="black"></path>
+                <polygon class="arrowhead" points="464,48 452,42.4 452,53.6" fill="black" transform="rotate(0,456,48)"></polygon>
+                <polygon class="arrowhead" points="432,296 420,290.4 420,301.6" fill="black" transform="rotate(90,424,296)"></polygon>
+                <polygon class="arrowhead" points="320,200 308,194.4 308,205.6" fill="black" transform="rotate(90,312,200)"></polygon>
+                <polygon class="arrowhead" points="320,48 308,42.4 308,53.6" fill="black" transform="rotate(0,312,48)"></polygon>
+                <polygon class="arrowhead" points="288,200 276,194.4 276,205.6" fill="black" transform="rotate(90,280,200)"></polygon>
+                <polygon class="arrowhead" points="264,240 252,234.4 252,245.6" fill="black" transform="rotate(0,256,240)"></polygon>
+                <g class="text">
+                  <text x="52" y="52">secret</text>
+                  <text x="88" y="52">n</text>
+                  <text x="208" y="52">KDF</text>
+                  <text x="232" y="52">s</text>
+                  <text x="356" y="52">secret</text>
+                  <text x="400" y="52">n+1</text>
+                  <text x="472" y="52">...</text>
+                  <text x="144" y="116">KDF</text>
+                  <text x="168" y="116">n</text>
+                  <text x="384" y="116">...</text>
+                  <text x="144" y="164">KDF</text>
+                  <text x="168" y="164">k</text>
+                  <text x="256" y="180">key</text>
+                  <text x="344" y="180">nonce</text>
+                  <text x="48" y="244">message</text>
+                  <text x="300" y="244">AEAD</text>
+                  <text x="288" y="324">keyid</text>
+                  <text x="352" y="324">n</text>
+                  <text x="444" y="324">ciphertext</text>
+                </g>
+              </svg><a href="#section-2.1-7.1.1" class="pilcrow">¶</a>
+</div>
+</div>
+<figcaption><a href="#figure-2" class="selfRef">Figure 2</a>:
+<a href="#name-message-encryption-ratchet" class="selfRef">Message Encryption Ratchet</a>
+          </figcaption></figure>
+</div>
+<p id="section-2.1-8">This scheme includes an empty associated data input
+to the AEAD.
+Though it might be possible to include the key identifier and sequence number,
+the iterated key derivation ensures that this is not necessary.<a href="#section-2.1-8" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="crypto">
+<section id="section-2.2">
+        <h3 id="name-cryptographic-primitives-an">
+<a href="#section-2.2" class="section-number selfRef">2.2. </a><a href="#name-cryptographic-primitives-an" class="section-name selfRef">Cryptographic Primitives and Agility</a>
+        </h3>
+<p id="section-2.2-1">This document uses a fixed profile of cryptographic primitives.<a href="#section-2.2-1" class="pilcrow">¶</a></p>
+<p id="section-2.2-2">This document uses HMAC-based Extract-and-Expand Key Derivation Function (HKDF) <span>[<a href="#HKDF" class="cite xref">HKDF</a>]</span>
+with SHA-256 <span>[<a href="#SHA" class="cite xref">SHA</a>]</span> as the underlying hash function.
+It also uses the 128-bit variant of AES in the GCM mode (AEAD_AES_128_GCM)
+as defined in <span><a href="https://rfc-editor.org/rfc/rfc5116#section-5.1" class="relref">Section 5.1</a> of [<a href="#AEAD" class="cite xref">AEAD</a>]</span>.<a href="#section-2.2-2" class="pilcrow">¶</a></p>
+<p id="section-2.2-3">Cryptographic agility is addressed by defining a replacement scheme;
+see <a href="#upgrade" class="auto internal xref">Section 8</a>.
+Any replacement push message encryption scheme
+requires that the Push API <span>[<a href="#PUSH-API" class="cite xref">PUSH-API</a>]</span>
+also be updated to include new parameters for that scheme.
+This is the same process that allows this scheme to be deployed
+as a replacement for the scheme in RFC 8291.<a href="#section-2.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="this-document">
+<section id="section-2.3">
+        <h3 id="name-this-document">
+<a href="#section-2.3" class="section-number selfRef">2.3. </a><a href="#name-this-document" class="section-name selfRef">This Document</a>
+        </h3>
+<p id="section-2.3-1">This document describes the push message encryption design
+in three parts:<a href="#section-2.3-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-2.3-2">
+<li id="section-2.3-2.1">
+            <p id="section-2.3-2.1.1">A user agent shared secret configuration,
+where the user agent provides the information
+necessary to construct a message it will accept.
+This is provided by the user agent to the application
+during the establishment of a push subscription.
+This depends only on the format of the shared secret,
+which are provided in <a href="#config" class="auto internal xref">Section 3</a>.<a href="#section-2.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-2.3-2.2">
+            <p id="section-2.3-2.2.1">The process used to encrypt push messages.
+This includes the format (<a href="#message" class="auto internal xref">Section 4</a>)
+and the process for producing that format (<a href="#encrypt" class="auto internal xref">Section 5</a>).<a href="#section-2.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-2.3-2.3">
+            <p id="section-2.3-2.3.1">The process used to decrypt push messages (<a href="#decrypt" class="auto internal xref">Section 6</a>).
+This is somewhat more involved than encryption
+as it has to account for the potential for reordered and dropped messages.<a href="#section-2.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+</section>
+</div>
+<div id="config">
+<section id="section-3">
+      <h2 id="name-user-agent-configuration">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-user-agent-configuration" class="section-name selfRef">User Agent Configuration</a>
+      </h2>
+<p id="section-3-1">In order for an application server to send a push message using these keys,
+it requires knowledge of the shared secret the user agent has chosen
+and the corresponding cipher.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">This information is formatted into a 36 byte shared secret format.
+<a href="#f-secret" class="auto internal xref">Figure 3</a> shows the structure of this information,
+using the format described in <span><a href="https://rfc-editor.org/rfc/rfc9000#section-1.3" class="relref">Section 1.3</a> of [<a href="#QUIC" class="cite xref">QUIC</a>]</span>.<a href="#section-3-2" class="pilcrow">¶</a></p>
+<span id="name-shared-secret-format"></span><div id="f-secret">
+<figure id="figure-3">
+        <div class="lang-artwork sourcecode" id="section-3-3.1">
+<pre>
+Shared Secret {
+  Key Identifier (8),
+  Sequence Number (24),
+  Secret (256),
+}
+</pre>
+</div>
+<figcaption><a href="#figure-3" class="selfRef">Figure 3</a>:
+<a href="#name-shared-secret-format" class="selfRef">Shared Secret Format</a>
+        </figcaption></figure>
+</div>
+<p id="section-3-4">This comprises the following items:<a href="#section-3-4" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-3-5">
+        <dt id="section-3-5.1">Key Identifier:</dt>
+        <dd style="margin-left: 1.5em" id="section-3-5.2">
+          <p id="section-3-5.2.1">An 8 bit value that will be used in protected messages
+to identify the shared state at the user agent.<a href="#section-3-5.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-3-5.3">Sequence Number:</dt>
+        <dd style="margin-left: 1.5em" id="section-3-5.4">
+          <p id="section-3-5.4.1">A 24 bit integer in network byte order.<a href="#section-3-5.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-3-5.5">Secret:</dt>
+        <dd style="margin-left: 1.5em" id="section-3-5.6">
+          <p id="section-3-5.6.1">A 256 bit shared secret.<a href="#section-3-5.6.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+<p id="section-3-6">All three of these values can be allocated randomly
+by a user agent,
+with the only condition being that the key identifier
+not match a value that has been provided to the same application.
+User agents can recycle a key identifier,
+but only if that key identifier has not been advertised or used
+for a significant period.
+This period needs to be at least as long as the retention time for old keys,
+otherwise there could be confusion
+about which secret the identifier refers to;
+see <a href="#rekey" class="auto internal xref">Section 7</a>.<a href="#section-3-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="message">
+<section id="section-4">
+      <h2 id="name-encrypted-push-message-form">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-encrypted-push-message-form" class="section-name selfRef">Encrypted Push Message Format</a>
+      </h2>
+<p id="section-4-1">The format of push messages is illustrated in <a href="#f-message" class="auto internal xref">Figure 4</a>.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<span id="name-encrypted-push-message-forma"></span><div id="f-message">
+<figure id="figure-4">
+        <div class="lang-artwork sourcecode" id="section-4-2.1">
+<pre>
+Encrypted Push Message {
+  Key Identifier (8),
+  Sequence Number (24),
+  Encrypted Message Contents (..),
+}
+</pre>
+</div>
+<figcaption><a href="#figure-4" class="selfRef">Figure 4</a>:
+<a href="#name-encrypted-push-message-forma" class="selfRef">Encrypted Push Message Format</a>
+        </figcaption></figure>
+</div>
+<p id="section-4-3">Processes for the application server that sends messages
+are included in <a href="#encrypt" class="auto internal xref">Section 5</a>;
+processes for the user agent that receives messages
+are included in <a href="#decrypt" class="auto internal xref">Section 6</a>.<a href="#section-4-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="encrypt">
+<section id="section-5">
+      <h2 id="name-push-message-encryption">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-push-message-encryption" class="section-name selfRef">Push Message Encryption</a>
+      </h2>
+<p id="section-5-1">Applications encapsulate a push message, <code>msg</code>,
+using values from the key configuration:<a href="#section-5-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5-2.1">
+          <p id="section-5-2.1.1">the key identifier from the configuration, <code>key_id</code>,<a href="#section-5-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-5-2.2">
+          <p id="section-5-2.2.1">the sequence number, <code>seq</code>, and<a href="#section-5-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-5-2.3">
+          <p id="section-5-2.3.1">the shared secret from the configuration, <code>secret</code>,<a href="#section-5-2.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-5-3">The application then constructs an encrypted push message, <code>push_message</code>,
+from the plaintext of the message, <code>msg</code>, as follows:<a href="#section-5-3" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5-4">
+<li id="section-5-4.1">
+          <p id="section-5-4.1.1">Invoke HKDF-Expand (see <span><a href="https://rfc-editor.org/rfc/rfc5869#section-2.3" class="relref">Section 2.3</a> of [<a href="#HKDF" class="cite xref">HKDF</a>]</span>)
+with SHA-256 <span>[<a href="#SHA" class="cite xref">SHA</a>]</span> as the underlying hash function
+three times,
+each time with <code>secret</code> as the <code>PRK</code> input,
+as follows:<a href="#section-5-4.1.1" class="pilcrow">¶</a></p>
+<ol start="1" type="a" class="normal type-a" id="section-5-4.1.2">
+<li id="section-5-4.1.2.1">
+              <p id="section-5-4.1.2.1.1">An <code>info</code> input of the ASCII-encoded (<span>[<a href="#ASCII" class="cite xref">ASCII</a>]</span>) string "secret"
+(that is, six bytes with no length prefix or null termination)
+and a length (<code>L</code>) input of 32 bytes;
+the output (<code>OKM</code>) is assigned to a variable <code>next_secret</code>.<a href="#section-5-4.1.2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-5-4.1.2.2">
+              <p id="section-5-4.1.2.2.1">An <code>info</code> input of the ASCII-encoded string "key"
+and a length (<code>L</code>) input of 16 bytes
+(corresponding to K_LEN for AEAD_AES_128_GCM);
+the output (<code>OKM</code>) is assigned to a variable <code>key</code>.<a href="#section-5-4.1.2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-5-4.1.2.3">
+              <p id="section-5-4.1.2.3.1">An <code>info</code> input of the ASCII-encoded string "nonce"
+and a length (<code>L</code>) input of 12 bytes
+(corresponding to <code>N_MIN</code> for AEAD_AES_128_GCM);
+the output (<code>OKM</code>) is assigned to a variable <code>nonce</code>.<a href="#section-5-4.1.2.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+</li>
+        <li id="section-5-4.2">
+          <p id="section-5-4.2.1">Invoke the encryption method (see <span><a href="https://rfc-editor.org/rfc/rfc5116#section-2.1" class="relref">Section 2.1</a> of [<a href="#AEAD" class="cite xref">AEAD</a>]</span>)
+of the AEAD_AES_128_GCM AEAD (see <span><a href="https://rfc-editor.org/rfc/rfc5116#section-5.1" class="relref">Section 5.1</a> of [<a href="#AEAD" class="cite xref">AEAD</a>]</span>)
+passing <code>msg</code> as P, <code>key</code> as K, <code>nonce</code> as N, and an empty associated data as A,
+yielding ciphertext <code>ct</code> as C.<a href="#section-5-4.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-5-4.3">
+          <p id="section-5-4.3.1">Concatenate the values of <code>key_id</code>, <code>seq</code>, and <code>ct</code>,
+yielding an encrypted push message <code>push_message</code>.<a href="#section-5-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-5-4.4">
+          <p id="section-5-4.4.1">Overwrite the value of <code>secret</code> with the value of <code>next_secret</code>
+and the value of <code>seq</code> with the value <code>(seq + 1) mod (1 &lt;&lt; 24)</code>
+(that is, the next 24-bit sequence number, modulo 2<sup>24</sup>).<a href="#section-5-4.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+<p id="section-5-5">A pseudocode version of this procedure is shown in <a href="#f-encrypt" class="auto internal xref">Figure 5</a>.<a href="#section-5-5" class="pilcrow">¶</a></p>
+<span id="name-encryption-pseudocode"></span><div id="f-encrypt">
+<figure id="figure-5">
+        <div class="lang-pseudocode sourcecode" id="section-5-6.1">
+<pre>
+next_secret = hkdf.expand(secret, "secret", 32)
+key = hkdf.expand(secret, "key", 16)
+nonce = hkdf.expand(secret, "nonce", 12)
+ct = aes128gcm.seal(key, nonce, "", msg)
+push_message = concat(key_id, seq, ct)
+secret = next_secret
+seq = (seq + 1) &amp; 0xff_ffff
+</pre>
+</div>
+<figcaption><a href="#figure-5" class="selfRef">Figure 5</a>:
+<a href="#name-encryption-pseudocode" class="selfRef">Encryption pseudocode</a>
+        </figcaption></figure>
+</div>
+<p id="section-5-7">Successful use of this scheme requires that an application server
+not generate two messages with the same sequence number; see <a href="#collision" class="auto internal xref">Section 9.3</a>.
+Concurrent access to the state that an application server holds,
+something that is more likely in a distributed system,
+could increase the risk of this sort of collision occurring.
+Application server implementations are responsible
+for ensuring that each sequence number is used just once.<a href="#section-5-7" class="pilcrow">¶</a></p>
+<aside id="section-5-8">
+        <p id="section-5-8.1">Distributed system design is not the responsibility of this document,
+but a number of options exist
+for ensuring that sequence numbers are not reused.
+This includes the use of distributed leader election or consensus protocols
+that can reliably allocate responsibility to a single node,
+which can then use standard concurrent programming techniques (such as a mutex).
+Other designs that trade off availability for simplicity or performance
+are also potentially viable.<a href="#section-5-8.1" class="pilcrow">¶</a></p>
+</aside>
+<p id="section-5-9">In order to avoid triggering duplicate message handling,
+an application server <span class="bcp14">MUST</span> use a fresh encryption
+for every attempt it makes to send messages,
+including retries.
+For instance, if the process in <span><a href="https://rfc-editor.org/rfc/rfc8030#section-5" class="relref">Section 5</a> of [<a href="#WEBPUSH" class="cite xref">WEBPUSH</a>]</span>
+does not produce an HTTP response,
+there is a chance that the push message was accepted.
+Retrying the request with the same push message ciphertext
+risks the same sequence number arriving at the user agent,
+which could treat that as an attack; see <a href="#ua-dup" class="auto internal xref">Section 6.2</a>.
+Producing fresh encryption of the message plaintext for each retry avoids this risk.<a href="#section-5-9" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="decrypt">
+<section id="section-6">
+      <h2 id="name-push-message-receiver-proce">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-push-message-receiver-proce" class="section-name selfRef">Push Message Receiver Processing</a>
+      </h2>
+<p id="section-6-1">A user agent decrypts a push message by reversing the encryption process.
+However, a user agent needs additional processing
+to deal with the potential for gaps in the sequence of messages it receives.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<p id="section-6-2">A user agent decrypts messages from multiple applications servers.
+To that end, it needs to store multiple secrets,
+which are indexed by push subscription and key identifier.
+This is described in <a href="#ua-state" class="auto internal xref">Section 6.1</a>.<a href="#section-6-2" class="pilcrow">¶</a></p>
+<p id="section-6-3">Importantly user agents need to deal with messages that arrive out of order
+relative to when they were sent
+and gaps in the sequence of messages.
+User agents therefore need to maintain access
+to the secrets for the messages it could receive
+either by generating and storing multiple secrets
+or by retaining an older secret and computing secrets as needed.<a href="#section-6-3" class="pilcrow">¶</a></p>
+<p id="section-6-4">To avoid receiving the same message twice,
+a user agent therefore needs to track which messages it has already received.
+This is covered in more detail in <a href="#ua-dup" class="auto internal xref">Section 6.2</a>.<a href="#section-6-4" class="pilcrow">¶</a></p>
+<p id="section-6-5">The algorithm in <a href="#decrypt-algo" class="auto internal xref">Section 6.3</a> is an example of a possible decryption routine.
+Implementations are free to use other methods
+provided that they reject duplicate messages
+and can tolerate gaps and reordering.<a href="#section-6-5" class="pilcrow">¶</a></p>
+<div id="ua-state">
+<section id="section-6.1">
+        <h3 id="name-user-agent-state">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-user-agent-state" class="section-name selfRef">User Agent State</a>
+        </h3>
+<p id="section-6.1-1">The protocol the user agent shares with the push service
+identifies the push subscription that the push message is being delivered to
+(carried in the <code>subscription</code> variable).
+The key identifier, <code>key_id</code>, is carried in the message.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.1-2">The user agent can recover the necessary state
+from the push subscription and key identifier:
+the shared secret, <code>secret</code>,
+the sequence number, <code>seq</code>,
+and the duplicate message record, <code>dup_record</code>.<a href="#section-6.1-2" class="pilcrow">¶</a></p>
+<p id="section-6.1-3">After successfully decrypting a message,
+the user agent updates the values it stores.
+This ensures that it is able to
+receive messages with higher sequence numbers
+and detect duplication messages.<a href="#section-6.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="ua-dup">
+<section id="section-6.2">
+        <h3 id="name-user-agent-duplicate-detect">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-user-agent-duplicate-detect" class="section-name selfRef">User Agent Duplicate Detection</a>
+        </h3>
+<p id="section-6.2-1">Each sequence number and shared secret produce the same AEAD key and nonce.
+Using the same key and nonce for different messages
+with AEAD_AES_128_GCM enables recovery of the key
+used to protect those messages.
+Due to the use of a KDF, this does not compromise other messages,
+but it is a serious risk to confidentiality and integrity.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.2-2">User agents therefore <span class="bcp14">MUST</span> maintain a record of which sequence numbers
+they have already received and successfully decrypted.
+If a duplicate sequence number is detected
+the user agent <span class="bcp14">MUST</span> destroy all secrets it holds for that session.
+Destroying secrets means that all future messages
+from that application server
+will be discarded.<a href="#section-6.2-2" class="pilcrow">¶</a></p>
+<p id="section-6.2-3">This record of used sequence numbers does not need to be unbounded in size;
+it can be limited to a finite window.
+Any message with a sequence number outside of that window
+<span class="bcp14">MUST</span> be discarded without attempting to decrypt it.<a href="#section-6.2-3" class="pilcrow">¶</a></p>
+<p id="section-6.2-4">To avoid false positives on duplicate detection
+the protocol used by the user agent to interact with the push service
+<span class="bcp14">MUST</span> ensure that the user agent does not attempt to process duplicate messages.
+The most reliable way of meeting this requirement
+is to ensure that duplicate push messages are detected and dropped
+before decryption;
+delivering messages at most once creates a high risk of message loss.<a href="#section-6.2-4" class="pilcrow">¶</a></p>
+<p id="section-6.2-5">Any duplicate message that arrives is then the result of an application server bug
+or an attack (such as a compromise of the secret).
+The push service <span class="bcp14">MUST NOT</span> parse and validate the sequence number
+from messages to remove duplicates as this could hide bugs and attacks.<a href="#section-6.2-5" class="pilcrow">¶</a></p>
+<aside id="section-6.2-6">
+          <p id="section-6.2-6.1">Note: <span><a href="https://rfc-editor.org/rfc/rfc8030#section-6.2" class="relref">Section 6.2</a> of [<a href="#WEBPUSH" class="cite xref">WEBPUSH</a>]</span> describes a protocol
+that might deliver a message multiple times.
+This is sufficient to meet this requirement
+because each message carries a unique identifier.
+This identifier enables the dropping of any duplicates
+before attempting decryption.<a href="#section-6.2-6.1" class="pilcrow">¶</a></p>
+</aside>
+</section>
+</div>
+<div id="decrypt-algo">
+<section id="section-6.3">
+        <h3 id="name-simple-decryption-algorithm">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-simple-decryption-algorithm" class="section-name selfRef">Simple Decryption Algorithm</a>
+        </h3>
+<p id="section-6.3-1">The algorithm in this section is a simplified version of the logic
+that a user agent might use to decrypt incoming push messages.
+<a href="#decrypt-notes" class="auto internal xref">Section 6.4</a> contains a discussion of its limitations
+and some additional considerations for user agent implementations.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
+<p id="section-6.3-2">This algorithm uses a configured value for
+the number of messages that can be accepted out of order called <code>window</code>.
+The duplicate message record is an array of booleans (a bitfield)
+of size <code>window</code>.
+This record initialized to contain all false values.<a href="#section-6.3-2" class="pilcrow">¶</a></p>
+<p id="section-6.3-3">This algorithm ensures that push messages are either
+passed to the AEAD for an attempt at decryption and subsequently tracked,
+or they are rejected based on sequence number alone
+as required by <a href="#ua-dup" class="auto internal xref">Section 6.2</a>.<a href="#section-6.3-3" class="pilcrow">¶</a></p>
+<p id="section-6.3-4">To decapsulate the encrypted push message, <code>push_message</code>:<a href="#section-6.3-4" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.3-5">
+<li id="section-6.3-5.1">
+            <p id="section-6.3-5.1.1">Parse <code>push_message</code>
+into <code>key_id</code>, <code>mseq</code>, and <code>ct</code>
+(indicated using the function <code>parse()</code> in pseudocode below).<a href="#section-6.3-5.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.3-5.2">
+            <p id="section-6.3-5.2.1">The user agent is then able to use <code>key_id</code> and <code>subscription</code> to find
+the corresponding secret, <code>secret</code>, sequence number, <code>seq</code>,
+and duplicate message record, <code>dup_record</code>
+(indicated with the function <code>lookup()</code> in the pseudocode below).
+If <code>key_id</code> does not identify a secret known to the user agent,
+the user agent discards the message and aborts.<a href="#section-6.3-5.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.3-5.3">
+            <p id="section-6.3-5.3.1">Assign a variable <code>offset</code> to <code>mseq</code> minus <code>seq</code>, modulo 2<sup>24</sup>.
+If <code>offset</code> is greater than or equal to <code>window</code>,
+the user agent discards the message and aborts.
+(Note that the modulo operation guarantees that offset will be very large
+if <code>mseq</code> is less than <code>seq</code>,
+which means that old messages are discarded.)<a href="#section-6.3-5.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.3-5.4">
+            <p id="section-6.3-5.4.1">If <code>dup_record</code> at an offset of <code>offset</code> is true,
+the user agent destroys the state associated with
+this push subscription and key identifier,
+purging them from any store the user agent maintains,
+and then discards the message and aborts.<a href="#section-6.3-5.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.3-5.5">
+            <p id="section-6.3-5.5.1">Assign a variable <code>msecret</code> to <code>secret</code>,
+then invoke HKDF on that value <code>offset</code> times.
+Each time HKDF-Expand (see <span><a href="https://rfc-editor.org/rfc/rfc5869#section-2.3" class="relref">Section 2.3</a> of [<a href="#HKDF" class="cite xref">HKDF</a>]</span>) is invoked
+with <code>msecret</code> as the <code>PRK</code> input,
+an <code>info</code> of "secret", and a length (<code>L</code>) of 32,
+assigning the output (<code>OKM</code>) back to <code>msecret</code>.<a href="#section-6.3-5.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.3-5.6">
+            <p id="section-6.3-5.6.1">Then, invoke HKDF-Expand twice more,
+each time with <code>msecret</code> as the <code>PRK</code> input,
+as follows:<a href="#section-6.3-5.6.1" class="pilcrow">¶</a></p>
+<ol start="1" type="a" class="normal type-a" id="section-6.3-5.6.2">
+<li id="section-6.3-5.6.2.1">
+                <p id="section-6.3-5.6.2.1.1">An <code>info</code> input of the ASCII-encoded string "key"
+and a length (<code>L</code>) input of 16 bytes
+(corresponding to K_LEN for AEAD_AES_128_GCM);
+the output (<code>OKM</code>) is assigned to a variable <code>key</code>.<a href="#section-6.3-5.6.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li id="section-6.3-5.6.2.2">
+                <p id="section-6.3-5.6.2.2.1">An <code>info</code> input of the ASCII-encoded string "nonce"
+and a length (<code>L</code>) input of 12 bytes
+(corresponding to <code>N_MIN</code> for AEAD_AES_128_GCM);
+the output (<code>OKM</code>) is assigned to a variable <code>nonce</code>.<a href="#section-6.3-5.6.2.2.1" class="pilcrow">¶</a></p>
+</li>
+            </ol>
+</li>
+          <li id="section-6.3-5.7">
+            <p id="section-6.3-5.7.1">Invoke the decryption method (see <span><a href="https://rfc-editor.org/rfc/rfc5116#section-2.2" class="relref">Section 2.2</a> of [<a href="#AEAD" class="cite xref">AEAD</a>]</span>)
+of the AEAD_AES_128_GCM AEAD (see <span><a href="https://rfc-editor.org/rfc/rfc5116#section-5.1" class="relref">Section 5.1</a> of [<a href="#AEAD" class="cite xref">AEAD</a>]</span>)
+passing <code>ct</code> as C, <code>key</code> as K, <code>nonce</code> as N, and an empty associated data as A,
+yielding either <code>msg</code> as P or an error (FAIL).
+If an error is returned,
+the user agent discards the message and aborts.<a href="#section-6.3-5.7.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.3-5.8">
+            <p id="section-6.3-5.8.1">Set the value at an offset of <code>offset</code> in <code>dup_record</code> to true.<a href="#section-6.3-5.8.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.3-5.9">
+            <p id="section-6.3-5.9.1">Assign a variable, <code>advance</code> to the greater of the following two values:<a href="#section-6.3-5.9.1" class="pilcrow">¶</a></p>
+<ol start="1" type="a" class="normal type-a" id="section-6.3-5.9.2">
+<li id="section-6.3-5.9.2.1">
+                <p id="section-6.3-5.9.2.1.1">The number of contiguous true values from the start of <code>dup_record</code>.<a href="#section-6.3-5.9.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li id="section-6.3-5.9.2.2">
+                <p id="section-6.3-5.9.2.2.1">The value of <code>offset</code> less half of <code>window</code>
+(as this choice has no significant impact on the algorithm,
+the value can be rounded in any direction).<a href="#section-6.3-5.9.2.2.1" class="pilcrow">¶</a></p>
+</li>
+            </ol>
+</li>
+          <li id="section-6.3-5.10">
+            <p id="section-6.3-5.10.1">Drop the <code>advance</code> items from the start of <code>dup_record</code>,
+and add <code>advance</code> false values to the end.<a href="#section-6.3-5.10.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.3-5.11">
+            <p id="section-6.3-5.11.1">Invoke HKDF <code>advance</code> times, as in step 5,
+but with <code>secret</code> in place of <code>msecret</code>.<a href="#section-6.3-5.11.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.3-5.12">
+            <p id="section-6.3-5.12.1">Add <code>advance</code> to <code>seq</code>.<a href="#section-6.3-5.12.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.3-5.13">
+            <p id="section-6.3-5.13.1">Return <code>msg</code> as the plaintext of the push message.<a href="#section-6.3-5.13.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-6.3-6">A pseudocode version of this procedure is shown in <a href="#f-decrypt" class="auto internal xref">Figure 6</a>.<a href="#section-6.3-6" class="pilcrow">¶</a></p>
+<span id="name-sample-decryption-pseudocod"></span><div id="f-decrypt">
+<figure id="figure-6">
+          <div class="lang-pseudocode sourcecode" id="section-6.3-7.1">
+<pre>
+# Parse and validate
+key_id, mseq, ct = parse(enc_request)
+secret, seq, dup_record = lookup(subscription, key_id)
+if not secret: abort
+offset = (mseq + 0x100_0000 - seq) &amp; 0xff_ffff
+if offset &gt;= window: abort
+if dup_record[offset] == true:
+  destroy_state(subscription, key_id)
+  abort
+
+# Get secret
+msecret = secret
+for i in 0..offset:
+  msecret = hkdf.expand(msecret, "secret", 32)
+
+# Decrypt
+key = hkdf.expand(msecret, "key", 16)
+nonce = hkdf.expand(msecret, "nonce", 12)
+msg, error = aes128gcm.open(key, "", nonce, ct)
+if error: abort
+
+# Update state
+dup_record[offset] = true
+advance = max(
+  dup_record.count_true_from_start(),
+  offset - (window / 2)
+)
+dup_record = dup_record[advance..] + [false] * advance
+for i in 0..advance:
+  secret = hkdf.expand(secret, "secret", 32)
+seq = seq + advance
+
+return msg
+</pre>
+</div>
+<figcaption><a href="#figure-6" class="selfRef">Figure 6</a>:
+<a href="#name-sample-decryption-pseudocod" class="selfRef">Sample decryption pseudocode</a>
+          </figcaption></figure>
+</div>
+<p id="section-6.3-8">An important property of this algorithm is that
+it does not alter user agent state unless decryption is successful.
+All cases where the process aborts occur before state is modified.
+Once successful, state is always updated;
+in particular, the duplicate message record is updated immediately.<a href="#section-6.3-8" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="decrypt-notes">
+<section id="section-6.4">
+        <h3 id="name-implementation-notes">
+<a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-implementation-notes" class="section-name selfRef">Implementation Notes</a>
+        </h3>
+<p id="section-6.4-1">The algorithm in <a href="#decrypt-algo" class="auto internal xref">Section 6.3</a> has some obvious inefficiencies.
+This is deliberate, as the goal is to describe an interoperable routine,
+not describe a performant one.<a href="#section-6.4-1" class="pilcrow">¶</a></p>
+<p id="section-6.4-2">In particular, an implementation can retain the secrets it computes,
+rather than recompute them each time.
+Otherwise, a malicious sender could use sequence number gaps
+to have the user agent waste effort.<a href="#section-6.4-2" class="pilcrow">¶</a></p>
+<p id="section-6.4-3">The potential for wasted effort also motivates having as small a value for <code>window</code>
+as typical usage permits.
+However, too small a value will result in all messages being discarded.
+Implementations will therefore need to learn what value is safe to deploy.<a href="#section-6.4-3" class="pilcrow">¶</a></p>
+<p id="section-6.4-4">Aside from updates to the duplicate message record,
+the final steps of the exemplary algorithm,
+which update the state held by the user agent,
+can be deferred and run less often.
+Push messages can arrive in batches,
+so running those steps at the end of handling a batch
+rather than after every decryption
+could be more efficient.<a href="#section-6.4-4" class="pilcrow">¶</a></p>
+<p id="section-6.4-5">Concurrent decryption for the same push subscription and key identifier
+cannot occur between steps 4 and 8 of the above algorithm, inclusive.
+Otherwise, concurrency might cause duplicate push messages to be accepted.<a href="#section-6.4-5" class="pilcrow">¶</a></p>
+<p id="section-6.4-6">Alternative algorithms are also possible.
+The approach here tracks a window
+that is roughly centered on the last sequence number that has been received
+if there are gaps in the sequence number space.<a href="#section-6.4-6" class="pilcrow">¶</a></p>
+<p id="section-6.4-7">The algorithm in <a href="#decrypt-algo" class="auto internal xref">Section 6.3</a> also does not consider time.
+An implementation could choose to limit the time that secrets are retained
+after a message with a higher sequence number has been received.<a href="#section-6.4-7" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="rekey">
+<section id="section-7">
+      <h2 id="name-rekeying">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-rekeying" class="section-name selfRef">Rekeying</a>
+      </h2>
+<p id="section-7-1">A user agent <span class="bcp14">MUST</span> supply fresh secrets to an application server
+on request.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-2">Propagating secrets to application server instances can take time,
+during which messages could be protected with older secrets.
+For this reason, user agents <span class="bcp14">MUST</span> retain old secrets
+until newer secrets are  used.
+That is, a message is successfully decrypting using a newer secret.<a href="#section-7-2" class="pilcrow">¶</a></p>
+<p id="section-7-3">Once a newer secret is used,
+a user agent <span class="bcp14">MUST</span> destroy old secrets after a configured period.
+This document does not specify how long to retain secrets,
+but any period needs to account for typical message delivery delays
+that might lead to reordering
+and the degree to which message loss can be tolerated.
+Longer periods are more tolerant,
+but carry greater risk
+if the old secret has been or will be compromised
+before it is destroyed.<a href="#section-7-3" class="pilcrow">¶</a></p>
+<p id="section-7-4">This ties removal of old secrets to the use of a replacement
+rather than a request.
+Use of the secret proves that the application successfully received the updated secret,
+which avoids the destruction of functioning secrets
+when an application fails to save newer secrets.<a href="#section-7-4" class="pilcrow">¶</a></p>
+<p id="section-7-5">Until newer secrets are used,
+the user agent <span class="bcp14">MAY</span> offer the same newer secrets to applications
+when secrets requested,
+which can reduce the amount of state they need to retain.<a href="#section-7-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="upgrade">
+<section id="section-8">
+      <h2 id="name-upgrading-from-rfc-8291">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-upgrading-from-rfc-8291" class="section-name selfRef">Upgrading from RFC 8291</a>
+      </h2>
+<p id="section-8-1">The encryption scheme in <span>[<a href="#RFC8291" class="cite xref">RFC8291</a>]</span> identifies itself
+through the use of the encrypted "aes128gcm" content coding <span>[<a href="#RFC8188" class="cite xref">RFC8188</a>]</span>.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-2">In place of content coding, this document defines a media type
+for push messages protected with this scheme; see <a href="#iana" class="auto internal xref">Section 10</a>.
+This allows this form of message protection to be positively identified
+and to distinguish this encryption scheme from any future scheme.<a href="#section-8-2" class="pilcrow">¶</a></p>
+<p id="section-8-3">An application <span class="bcp14">MUST NOT</span> use this message encryption scheme
+and the "aes128gcm" content coding at the same time,
+even though that is possible.
+A user agent <span class="bcp14">MAY</span> discard messages that contain both schemes.<a href="#section-8-3" class="pilcrow">¶</a></p>
+<p id="section-8-4"><span><a href="https://rfc-editor.org/rfc/rfc8291#section-4" class="relref">Section 4</a> of [<a href="#RFC8291" class="cite xref">RFC8291</a>]</span> recommends that push services support ciphertext
+of 4096 bytes.
+This capacity includes cryptographic overheads,
+which in RFC 8291 were 103 bytes.
+The use of this symmetric encryption scheme reduces those overheads to 20 bytes:
+4 for the header and 16 for the AEAD tag.<a href="#section-8-4" class="pilcrow">¶</a></p>
+<p id="section-8-5">No provision is made for padding in this scheme.
+Padding of plaintext is therefore necessary
+to provide resistance against traffic analysis;
+see <a href="#security" class="auto internal xref">Section 9</a> for details.<a href="#section-8-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security">
+<section id="section-9">
+      <h2 id="name-security-considerations">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-9-1">A user agent relies to some degree on two values
+remaining confidential to protect it from unwanted messages:<a href="#section-9-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-9-2.1">
+          <p id="section-9-2.1.1">the URL at which push messages are delivered,
+knowledge of which is necessary
+for messages to reach the user agent at all, and<a href="#section-9-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-2.2">
+          <p id="section-9-2.2.1">the secrets that are used to authenticate the sender,
+which is the primary defense.<a href="#section-9-2.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-9-3">Knowledge of these values
+allows an attacker to send any message it chooses
+to the user agent.<a href="#section-9-3" class="pilcrow">¶</a></p>
+<p id="section-9-4">This document exercises the options described in <span>[<a href="#RFC8192" class="cite xref">RFC8192</a>]</span>
+for replacing the encryption scheme.
+Any replacement of this encryption scheme can use those same techniques.<a href="#section-9-4" class="pilcrow">¶</a></p>
+<div id="traffic-analysis">
+<section id="section-9.1">
+        <h3 id="name-traffic-analysis">
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-traffic-analysis" class="section-name selfRef">Traffic Analysis</a>
+        </h3>
+<p id="section-9.1-1">Like the design in RFC 8291 (see <span><a href="https://rfc-editor.org/rfc/rfc8291#section-7" class="relref">Section 7</a> of [<a href="#RFC8291" class="cite xref">RFC8291</a>]</span>),
+this mechanism cannot obscure the presence, timing, and size of messages
+from the push service.<a href="#section-9.1-1" class="pilcrow">¶</a></p>
+<p id="section-9.1-2">Though communication with the push service is protected by TLS,
+without additional traffic analysis protection,
+network observers might also be able to observe these attributes of messages.<a href="#section-9.1-2" class="pilcrow">¶</a></p>
+<p id="section-9.1-3">Padding of the payload of messages can be used
+to obscure the precise size of the message,
+but no facility is provided in this document for padding messages.
+This differs from the RFC 8291 design,
+which was able to use the padding provided by the <span>[<a href="#RFC8188" class="cite xref">RFC8188</a>]</span> encoding.<a href="#section-9.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="compromise">
+<section id="section-9.2">
+        <h3 id="name-secret-compromise">
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-secret-compromise" class="section-name selfRef">Secret Compromise</a>
+        </h3>
+<p id="section-9.2-1">This message encryption scheme does not provide confidentiality
+of messages that are sent after a key becomes compromised.
+A compromise of a secret leads to loss of confidentiality
+for all messages sent under that secret or any subsequent secret.
+Knowledge of the secret also grants the ability to forge arbitrary new messages.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
+<p id="section-9.2-2">Destroying secrets in the event of a collision (<a href="#collision" class="auto internal xref">Section 9.3</a>)
+is only a partial mitigation against compromise.
+A successful forgery requires that an attacker ensure that its forged messages
+do not use the same sequence numbers as genuine messages
+that reach the user agent.
+If the attacker sends first, the forged message is still received.
+Destroying secrets has no effect on attacks
+that modify or inspect messages.<a href="#section-9.2-2" class="pilcrow">¶</a></p>
+<p id="section-9.2-3">Forward secrecy is provided with respect to compromise of application servers,
+but the need to handle gaps and reordering at a user agent
+means that there is only limited forward secrecy.
+The simple algorithm in <a href="#decrypt-algo" class="auto internal xref">Section 6.3</a> provides forward secrecy
+when messages arrive in order.
+However, when there is a gap in the arriving sequence of messages,
+the secrets for half of the configured window are retained.
+<a href="#decrypt-notes" class="auto internal xref">Section 6.4</a> describes how user agent implementation could use a timer
+to supplement this safeguard.<a href="#section-9.2-3" class="pilcrow">¶</a></p>
+<p id="section-9.2-4">The best way to manage these risks is more frequent key rotation.
+Whether it is possible to reliably rotate keys
+will determine whether this design is feasable
+relative to one that uses a PQ KEM, like <span>[<a href="#WEBPUSH-HPKE" class="cite xref">WEBPUSH-HPKE</a>]</span>.
+See <a href="#rekey" class="auto internal xref">Section 7</a> for details.<a href="#section-9.2-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="collision">
+<section id="section-9.3">
+        <h3 id="name-key-and-nonce-collisions">
+<a href="#section-9.3" class="section-number selfRef">9.3. </a><a href="#name-key-and-nonce-collisions" class="section-name selfRef">Key and Nonce Collisions</a>
+        </h3>
+<p id="section-9.3-1">Protection of two different messages with an identical nonce
+leads to a key compromise in many AEAD functions.
+Application servers <span class="bcp14">MUST</span> ensure that each sequence number is used at most once.<a href="#section-9.3-1" class="pilcrow">¶</a></p>
+<p id="section-9.3-2">User agents <span class="bcp14">MUST</span> track which nonces have been used
+for any sequence numbers that they might accept.
+If a user agent detects nonce reuse
+it <span class="bcp14">MUST</span> discard the corresponding state
+for that application server and key identifier.
+This adds a requirement on the protocols used to deliver push messages
+such that they provide duplicate detection and removal.<a href="#section-9.3-2" class="pilcrow">¶</a></p>
+<p id="section-9.3-3">The probability that two messages use the same key and nonce
+is negligible.
+The two values are 224 bits when combined,
+which produce a collision with at most 2<sup>n-112</sup> probability
+in any sample of 2<sup>n</sup> messages.<a href="#section-9.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="key-usage">
+<section id="section-9.4">
+        <h3 id="name-secret-and-key-usage">
+<a href="#section-9.4" class="section-number selfRef">9.4. </a><a href="#name-secret-and-key-usage" class="section-name selfRef">Secret and Key Usage</a>
+        </h3>
+<p id="section-9.4-1">The lack of post-compromise security in this design
+means that using the same sequence of shared secrets
+for an extended period of time increases the impact of a compromise.
+All push messages from the point of compromise onward are compromised,
+giving the attacker the ability to read, modify, or forge every message.<a href="#section-9.4-1" class="pilcrow">¶</a></p>
+<p id="section-9.4-2">An application server <span class="bcp14">SHOULD</span> request fresh secrets as often as they are able;
+see <a href="#rekey" class="auto internal xref">Section 7</a>.<a href="#section-9.4-2" class="pilcrow">¶</a></p>
+<p id="section-9.4-3">Overuse of an AEAD key can give an attacker additional advantages
+that might lead to loss of confidentiality
+or the ability to forge messages.
+The guidance in <span>[<a href="#AEAD-LIMITS" class="cite xref">AEAD-LIMITS</a>]</span>
+does not apply as each secret is used for a single, small message.
+Any requirement to renew secrets is therefore driven
+by the need to manage the risk of compromise.<a href="#section-9.4-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="dos">
+<section id="section-9.5">
+        <h3 id="name-handling-denial-of-service">
+<a href="#section-9.5" class="section-number selfRef">9.5. </a><a href="#name-handling-denial-of-service" class="section-name selfRef">Handling Denial of Service</a>
+        </h3>
+<p id="section-9.5-1">A user agent that receives multiple unwanted messages,
+including messages that are discarded,
+might be the target of a denial of service attack.
+Such an attack might seek to drain batteries
+by activating the device radio
+or by creating messages that cannot be decrypted.<a href="#section-9.5-1" class="pilcrow">¶</a></p>
+<p id="section-9.5-2">This design also creates additional load from push messages
+with sequence numbers that are large
+relative to the window that the user agent will accept.
+Such messages do not need to be decryptable to cause the user agent to waste effort.
+A user agent can track any abnormal effort induced from each application
+and act to protect itself.<a href="#section-9.5-2" class="pilcrow">¶</a></p>
+<p id="section-9.5-3">If repeated abuse is detected,
+options for protection include
+limiting the rate of messages that are accepted from an application server
+or destroying push subscriptions.<a href="#section-9.5-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-media">
+<section id="section-9.6">
+        <h3 id="name-media-type-security">
+<a href="#section-9.6" class="section-number selfRef">9.6. </a><a href="#name-media-type-security" class="section-name selfRef">Media Type Security</a>
+        </h3>
+<p id="section-9.6-1">Push messages contain arbitrary content chosen by an application server.
+Though the format does not provide explicit signaling for the encapsulated media type,
+applications can include arbitrary data.
+How data is handled is determined by the application,
+which both sends and receives the data.<a href="#section-9.6-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="iana">
+<section id="section-10">
+      <h2 id="name-iana-considerations">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-10-1">This document registers the "application/webpush-message" content type
+to identify a push message that is protected with this scheme,
+as defined in <a href="#message" class="auto internal xref">Section 4</a>.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlCompact dlParallel" id="section-10-2">
+        <dt id="section-10-2.1">Type name:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.2">
+          <p id="section-10-2.2.1">application<a href="#section-10-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.3">Subtype name:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.4">
+          <p id="section-10-2.4.1">webpush-message<a href="#section-10-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.5">Required parameters:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.6">
+          <p id="section-10-2.6.1">N/A<a href="#section-10-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.7">Optional parameters:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.8">
+          <p id="section-10-2.8.1">N/A<a href="#section-10-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.9">Encoding considerations:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.10">
+          <p id="section-10-2.10.1">"binary"<a href="#section-10-2.10.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.11">Security considerations:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.12">
+          <p id="section-10-2.12.1">see <a href="#sec-media" class="auto internal xref">Section 9.6</a><a href="#section-10-2.12.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.13">Interoperability considerations:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.14">
+          <p id="section-10-2.14.1">N/A<a href="#section-10-2.14.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.15">Published specification:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.16">
+          <p id="section-10-2.16.1">this specification<a href="#section-10-2.16.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.17">Applications that use this media type:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.18">
+          <p id="section-10-2.18.1">push messaging applications;
+this identifies an encrypted web push message<a href="#section-10-2.18.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.19">Fragment identifier considerations:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.20">
+          <p id="section-10-2.20.1">N/A<a href="#section-10-2.20.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.21">Additional information:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.22">
+          <span class="break"></span><dl class="dlCompact dlParallel" id="section-10-2.22.1">
+            <dt id="section-10-2.22.1.1">Magic number(s):</dt>
+            <dd style="margin-left: 1.5em" id="section-10-2.22.1.2">N/A<a href="#section-10-2.22.1.2" class="pilcrow">¶</a>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-10-2.22.1.3">Deprecated alias names for this type:</dt>
+            <dd style="margin-left: 1.5em" id="section-10-2.22.1.4">N/A<a href="#section-10-2.22.1.4" class="pilcrow">¶</a>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-10-2.22.1.5">File extension(s):</dt>
+            <dd style="margin-left: 1.5em" id="section-10-2.22.1.6">N/A<a href="#section-10-2.22.1.6" class="pilcrow">¶</a>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-10-2.22.1.7">Macintosh file type code(s):</dt>
+            <dd style="margin-left: 1.5em" id="section-10-2.22.1.8">N/A<a href="#section-10-2.22.1.8" class="pilcrow">¶</a>
+</dd>
+          <dd class="break"></dd>
+</dl>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.23">Person and email address to contact for further information:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.24">
+          <p id="section-10-2.24.1">see Authors' Addresses section<a href="#section-10-2.24.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.25">Intended usage:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.26">
+          <p id="section-10-2.26.1">COMMON<a href="#section-10-2.26.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.27">Restrictions on usage:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.28">
+          <p id="section-10-2.28.1">N/A<a href="#section-10-2.28.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.29">Author:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.30">
+          <p id="section-10-2.30.1">see Authors' Addresses section<a href="#section-10-2.30.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-10-2.31">Change controller:</dt>
+        <dd style="margin-left: 1.5em" id="section-10-2.32">
+          <p id="section-10-2.32.1">IETF<a href="#section-10-2.32.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-11">
+      <h2 id="name-references">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-11.1">
+        <h3 id="name-normative-references">
+<a href="#section-11.1" class="section-number selfRef">11.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="AEAD">[AEAD]</dt>
+        <dd>
+<span class="refAuthor">McGrew, D.</span>, <span class="refTitle">"An Interface and Algorithms for Authenticated Encryption"</span>, <span class="seriesInfo">RFC 5116</span>, <span class="seriesInfo">DOI 10.17487/RFC5116</span>, <time datetime="2008-01" class="refDate">January 2008</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc5116">https://www.rfc-editor.org/rfc/rfc5116</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="ASCII">[ASCII]</dt>
+        <dd>
+<span class="refAuthor">Cerf, V.</span>, <span class="refTitle">"ASCII format for network interchange"</span>, <span class="seriesInfo">STD 80</span>, <span class="seriesInfo">RFC 20</span>, <span class="seriesInfo">DOI 10.17487/RFC20</span>, <time datetime="1969-10" class="refDate">October 1969</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc20">https://www.rfc-editor.org/rfc/rfc20</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="HKDF">[HKDF]</dt>
+        <dd>
+<span class="refAuthor">Krawczyk, H.</span> and <span class="refAuthor">P. Eronen</span>, <span class="refTitle">"HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"</span>, <span class="seriesInfo">RFC 5869</span>, <span class="seriesInfo">DOI 10.17487/RFC5869</span>, <time datetime="2010-05" class="refDate">May 2010</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc5869">https://www.rfc-editor.org/rfc/rfc5869</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8188">[RFC8188]</dt>
+        <dd>
+<span class="refAuthor">Thomson, M.</span>, <span class="refTitle">"Encrypted Content-Encoding for HTTP"</span>, <span class="seriesInfo">RFC 8188</span>, <span class="seriesInfo">DOI 10.17487/RFC8188</span>, <time datetime="2017-06" class="refDate">June 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8188">https://www.rfc-editor.org/rfc/rfc8188</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="SHA">[SHA]</dt>
+        <dd>
+<span class="refTitle">"Secure hash standard"</span>, <span class="refContent">National Institute of Standards and Technology (U.S.)</span>, <span class="seriesInfo">DOI 10.6028/nist.fips.180-4</span>, <time datetime="2015" class="refDate">2015</time>, <span>&lt;<a href="https://doi.org/10.6028/nist.fips.180-4">https://doi.org/10.6028/nist.fips.180-4</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="WEBPUSH">[WEBPUSH]</dt>
+      <dd>
+<span class="refAuthor">Thomson, M.</span>, <span class="refAuthor">Damaggio, E.</span>, and <span class="refAuthor">B. Raymor, Ed.</span>, <span class="refTitle">"Generic Event Delivery Using HTTP Push"</span>, <span class="seriesInfo">RFC 8030</span>, <span class="seriesInfo">DOI 10.17487/RFC8030</span>, <time datetime="2016-12" class="refDate">December 2016</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8030">https://www.rfc-editor.org/rfc/rfc8030</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-11.2">
+        <h3 id="name-informative-references">
+<a href="#section-11.2" class="section-number selfRef">11.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="AEAD-LIMITS">[AEAD-LIMITS]</dt>
+        <dd>
+<span class="refAuthor">Günther, F.</span>, <span class="refAuthor">Thomson, M.</span>, and <span class="refAuthor">C. A. Wood</span>, <span class="refTitle">"Usage Limits on AEAD Algorithms"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-aead-limits-13</span>, <time datetime="2026-09-03" class="refDate">3 September 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-aead-limits-13">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-aead-limits-13</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="PQC-GUIDE">[PQC-GUIDE]</dt>
+        <dd>
+<span class="refAuthor">Banerjee, A.</span>, <span class="refAuthor">Reddy.K, T.</span>, <span class="refAuthor">Schoinianakis, D.</span>, <span class="refAuthor">Hollebeek, T.</span>, and <span class="refAuthor">M. Ounsworth</span>, <span class="refTitle">"Post-Quantum Cryptography for Engineers"</span>, <span class="seriesInfo">RFC 9958</span>, <span class="seriesInfo">DOI 10.17487/RFC9958</span>, <time datetime="2026-06" class="refDate">June 2026</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9958">https://www.rfc-editor.org/rfc/rfc9958</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="PUSH-API">[PUSH-API]</dt>
+        <dd>
+<span class="refAuthor">Caçeres, M.</span> and <span class="refAuthor">K. Rosylight</span>, <span class="refTitle">"Push API"</span>, <span class="seriesInfo">W3C Working Draft</span>, <time datetime="2025-12-01" class="refDate">1 December 2025</time>. </dd>
+<dd class="break"></dd>
+<dt id="QUIC">[QUIC]</dt>
+        <dd>
+<span class="refAuthor">Iyengar, J., Ed.</span> and <span class="refAuthor">M. Thomson, Ed.</span>, <span class="refTitle">"QUIC: A UDP-Based Multiplexed and Secure Transport"</span>, <span class="seriesInfo">RFC 9000</span>, <span class="seriesInfo">DOI 10.17487/RFC9000</span>, <time datetime="2021-05" class="refDate">May 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9000">https://www.rfc-editor.org/rfc/rfc9000</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8192">[RFC8192]</dt>
+        <dd>
+<span class="refAuthor">Hares, S.</span>, <span class="refAuthor">Lopez, D.</span>, <span class="refAuthor">Zarny, M.</span>, <span class="refAuthor">Jacquenet, C.</span>, <span class="refAuthor">Kumar, R.</span>, and <span class="refAuthor">J. Jeong</span>, <span class="refTitle">"Interface to Network Security Functions (I2NSF): Problem Statement and Use Cases"</span>, <span class="seriesInfo">RFC 8192</span>, <span class="seriesInfo">DOI 10.17487/RFC8192</span>, <time datetime="2017-07" class="refDate">July 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8192">https://www.rfc-editor.org/rfc/rfc8192</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8291">[RFC8291]</dt>
+        <dd>
+<span class="refAuthor">Thomson, M.</span>, <span class="refTitle">"Message Encryption for Web Push"</span>, <span class="seriesInfo">RFC 8291</span>, <span class="seriesInfo">DOI 10.17487/RFC8291</span>, <time datetime="2017-11" class="refDate">November 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8291">https://www.rfc-editor.org/rfc/rfc8291</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="WEBPUSH-HPKE">[WEBPUSH-HPKE]</dt>
+      <dd>
+<span class="refAuthor">Thomson, M.</span>, <span class="refTitle">"WebPush Encryption using HPKE"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-thomson-webpush-hpke</span>, <time datetime="2026-09-23" class="refDate">23 September 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-thomson-webpush-hpke">https://datatracker.ietf.org/doc/html/draft-thomson-webpush-hpke</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-A">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-A-1"><span class="contact-name">David Benjamin</span> and <span class="contact-name">Sebastian Poreba</span> suggested
+that symmetric keys might be preferable
+to an asymmetric PQ approach (such as <span>[<a href="#WEBPUSH-HPKE" class="cite xref">WEBPUSH-HPKE</a>]</span>)
+due to the significant overheads of the PQ KEM.
+Both <span class="contact-name">David Benjamin</span> and <span class="contact-name">Dennis Jackson</span> independently
+suggested variations on a racheting design.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-B">
+      <h2 id="name-authors-address">
+<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Martin Thomson</span></div>
+<div dir="auto" class="left"><span class="org">Mozilla</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:mt@lowentropy.net" class="email">mt@lowentropy.net</a>
+</div>
+</address>
+</section>
+</div>
+<script type="module" src="comment.js"></script>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
