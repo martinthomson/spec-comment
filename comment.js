@@ -189,6 +189,8 @@ function initCommentButton(doc = document) {
     typeInputs.set(type, radio);
     typeLabels.set(type, label);
   }
+  typeGroup.addEventListener("change", () => {
+  });
 
   const editor = doc.createElement("textarea");
   editor.setAttribute("aria-label", "Comment text");
@@ -490,6 +492,9 @@ function initCommentButton(doc = document) {
       const selected = radio.checked;
       label.classList.toggle("is-selected", selected);
     }
+    if (activeSelection?.range) {
+      highlightEditingSelection(selectedType(), activeSelection.range);
+    }
   }
 
   function selectedType() {
@@ -539,6 +544,29 @@ function initCommentButton(doc = document) {
         cssHighlights.delete(name);
       }
     }
+  }
+
+  function clearEditingSelectionHighlight() {
+    const cssHighlights = doc.defaultView.CSS?.highlights;
+    for (const type of ["Major Issue", "Minor Issue", "Comment", "Nit"]) {
+      const name = `spec-comment-edit-${type.toLowerCase().replace(/\s+/g, "-")}`;
+      cssHighlights?.delete(name);
+    }
+  }
+
+  function highlightEditingSelection(type, range) {
+    clearEditingSelectionHighlight();
+    const cssHighlights = doc.defaultView.CSS?.highlights;
+    const HighlightConstructor = doc.defaultView.Highlight;
+    if (!range || !cssHighlights || !HighlightConstructor) return;
+
+    const name = `spec-comment-edit-${type.toLowerCase().replace(/\s+/g, "-")}`;
+    cssHighlights.set(name, new HighlightConstructor(range));
+    const start =
+      range.startContainer.nodeType === doc.defaultView.Node.ELEMENT_NODE
+        ? range.startContainer
+        : range.startContainer.parentElement;
+    start?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   function sortComments() {
@@ -858,8 +886,8 @@ function initCommentButton(doc = document) {
         issueTitle.value = comment.title || "";
         editor.value = comment.text;
         typeInputs.get(comment.type).checked = true;
-        updateTypeButtons();
         activeSelection = { text: comment.selection, range: comment.range };
+        updateTypeButtons();
         addButton.textContent = "Update Comment";
         renderComments();
         issueTitle.focus();
@@ -941,6 +969,7 @@ function initCommentButton(doc = document) {
     } else {
       comments.push(updatedComment);
     }
+    clearEditingSelectionHighlight();
     editingCommentId = null;
     sortComments();
     persistComments();
@@ -979,16 +1008,17 @@ function initCommentButton(doc = document) {
   }
 
   function openPanel() {
-    if (!panelOpen) {
-      changedTocLayout = doc.body.classList.replace(
-        "toc-sidebar",
-        "toc-inline",
-      );
-      typeInputs.get("Comment").checked = true;
-      updateTypeButtons();
-      activeSelection = captureSelection();
-      if (!editor.value) editor.value = commentTemplate();
+    if (panelOpen) {
+      closePanel();
     }
+    changedTocLayout = doc.body.classList.replace(
+      "toc-sidebar",
+      "toc-inline",
+    );
+    typeInputs.get("Comment").checked = true;
+    activeSelection = captureSelection();
+    updateTypeButtons();
+    if (!editor.value) editor.value = commentTemplate();
     updateActionButtons();
     panelOpen = true;
     panel.classList.add("is-open");
@@ -1004,6 +1034,7 @@ function initCommentButton(doc = document) {
       changedTocLayout = false;
     }
     const wasEditing = editingCommentId !== null;
+    clearEditingSelectionHighlight();
     editingCommentId = null;
     issueTitle.value = "";
     editor.value = "";
@@ -1104,6 +1135,7 @@ function initCommentButton(doc = document) {
       const name = `spec-comment-${type.toLowerCase().replace(/\s+/g, "-")}`;
       doc.defaultView.CSS?.highlights?.delete(name);
     }
+    clearEditingSelectionHighlight();
     setShift(0);
     adjustToc(0);
     ui.remove();

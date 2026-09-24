@@ -26,6 +26,22 @@
   text-underline-offset: 2px;
 }
 
+::highlight(spec-comment-edit-major-issue) {
+  background-color: rgba(185, 103, 103, 0.5);
+}
+
+::highlight(spec-comment-edit-minor-issue) {
+  background-color: rgba(193, 132, 88, 0.5);
+}
+
+::highlight(spec-comment-edit-comment) {
+  background-color: rgba(169, 155, 72, 0.5);
+}
+
+::highlight(spec-comment-edit-nit) {
+  background-color: rgba(102, 139, 168, 0.5);
+}
+
 .spec-comment-ui {
   aside fieldset label[data-type="major-issue"],
   aside [role="list"] div.major-issue {
