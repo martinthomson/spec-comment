@@ -153,7 +153,7 @@
     background: var(--background-color, #fff);
     border-right: 1px solid var(--line-color, #ccc);
     box-shadow: 2px 0 12px rgb(0 0 0 / 18%);
-    font: 16px/1.4 sans-serif;
+    font: 15px/1.4 sans-serif;
 
     &.is-open {
       display: flex;
