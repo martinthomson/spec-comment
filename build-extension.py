@@ -22,7 +22,7 @@ FILES = (
 
 
 def main() -> None:
-    output = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "rfc-comment-extension.zip"
+    output = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "spec-comment-extension.zip"
     output = output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
 

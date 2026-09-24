@@ -125,17 +125,17 @@ function reviewTitle(doc) {
 
 /** Add a selection-triggered Comment button to an RFC HTML document. */
 function initCommentButton(doc = document) {
-  const existing = doc.querySelector("[data-rfc-comment-button]");
+  const existing = doc.querySelector("[data-spec-comment-button]");
   if (existing) return () => {};
 
   const ui = doc.createElement("div");
-  ui.className = "comment-ui";
+  ui.className = "spec-comment-ui";
   doc.body.append(ui);
 
   const button = doc.createElement("button");
   button.type = "button";
   button.textContent = "Comment";
-  button.setAttribute("data-rfc-comment-button", "");
+  button.setAttribute("data-spec-comment-button", "");
   button.setAttribute("aria-label", "Comment on selected text");
   // Keep the document selection when the button is pressed.
   button.addEventListener("mousedown", (event) => event.preventDefault());
@@ -146,7 +146,7 @@ function initCommentButton(doc = document) {
   panel.setAttribute("aria-label", "Comment editor");
 
   const heading = doc.createElement("h2");
-  heading.id = "rfc-comment-heading";
+  heading.id = "spec-comment-heading";
   heading.textContent = reviewTitle(doc);
   const panelHeader = doc.createElement("header");
   panelHeader.setAttribute("aria-labelledby", heading.id);
@@ -169,7 +169,7 @@ function initCommentButton(doc = document) {
 
     const radio = doc.createElement("input");
     radio.type = "radio";
-    radio.name = "rfc-comment-type";
+    radio.name = "spec-comment-type";
     radio.value = type;
     radio.checked = type === "Comment";
     label.setAttribute("data-type", type.toLowerCase().replace(/\s+/g, "-"));
@@ -384,7 +384,7 @@ function initCommentButton(doc = document) {
 
     const types = ["Major Issue", "Minor Issue", "Comment", "Nit"];
     for (const type of types) {
-      const name = `rfc-comment-${type.toLowerCase().replace(/\s+/g, "-")}`;
+      const name = `spec-comment-${type.toLowerCase().replace(/\s+/g, "-")}`;
       const ranges = comments
         .filter((comment) => comment.type === type && comment.range)
         .map((comment) => comment.range);
@@ -879,7 +879,7 @@ function initCommentButton(doc = document) {
     doc.defaultView.removeEventListener("resize", reposition);
     panelResizeObserver?.disconnect();
     for (const type of ["Major Issue", "Minor Issue", "Comment", "Nit"]) {
-      const name = `rfc-comment-${type.toLowerCase().replace(/\s+/g, "-")}`;
+      const name = `spec-comment-${type.toLowerCase().replace(/\s+/g, "-")}`;
       doc.defaultView.CSS?.highlights?.delete(name);
     }
     setShift(0);

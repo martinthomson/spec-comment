@@ -1,32 +1,32 @@
-::highlight(rfc-comment-major-issue) {
+::highlight(spec-comment-major-issue) {
   text-decoration: underline;
   text-decoration-color: #b96767;
   text-decoration-thickness: 2px;
   text-underline-offset: 2px;
 }
 
-::highlight(rfc-comment-minor-issue) {
+::highlight(spec-comment-minor-issue) {
   text-decoration: underline;
   text-decoration-color: #c18458;
   text-decoration-thickness: 2px;
   text-underline-offset: 2px;
 }
 
-::highlight(rfc-comment-comment) {
+::highlight(spec-comment-comment) {
   text-decoration: underline;
   text-decoration-color: #a99b48;
   text-decoration-thickness: 2px;
   text-underline-offset: 2px;
 }
 
-::highlight(rfc-comment-nit) {
+::highlight(spec-comment-nit) {
   text-decoration: underline;
   text-decoration-color: #668ba8;
   text-decoration-thickness: 2px;
   text-underline-offset: 2px;
 }
 
-.comment-ui {
+.spec-comment-ui {
   aside fieldset label[data-type="major-issue"],
   aside [role="list"] div.major-issue {
     --type-color: #b96767;
@@ -109,14 +109,14 @@
     background: #333;
   }
 
-  [data-rfc-comment-button],
+  [data-spec-comment-button],
   [data-comment-list-button] {
     position: fixed;
     z-index: 10;
     display: none;
   }
 
-  [data-rfc-comment-button].is-visible,
+  [data-spec-comment-button].is-visible,
   [data-comment-list-button].is-visible {
     display: block;
   }
