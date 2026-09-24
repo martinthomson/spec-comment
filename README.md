@@ -20,6 +20,8 @@ and, optionally, a title.
 Finally, the review can be copied to clipboard, downloaded, or,
 if references to a GitHub repository or mailing list are detected,
 a fresh GitHub issue or email can be created.
+The review is presented in markdown format
+in a form roughly compatible with [ietf-comments](https://github.com/mnot/ietf-comments/blob/main/format.md).
 
 ## Debugging the extension
 
