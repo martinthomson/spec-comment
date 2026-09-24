@@ -265,11 +265,48 @@ function initCommentButton(doc = document) {
       temporary.remove();
     }
     copyReviewButton.textContent = copied ? "Copied!" : "Copy failed";
+    copyReviewButton.disabled = true;
     doc.defaultView.setTimeout(() => {
       copyReviewButton.textContent = "Copy Review";
+      copyReviewButton.disabled = false;
     }, 1800);
   });
   actionsPanel.append(copyReviewButton);
+
+  const downloadReviewButton = doc.createElement("button");
+  downloadReviewButton.type = "button";
+  downloadReviewButton.textContent = "Download Review";
+  downloadReviewButton.disabled = true;
+  downloadReviewButton.addEventListener("click", () => {
+    commitCurrentComment();
+    const text = `# ${reviewTitle(doc)}\n\n${reviewText()}`;
+    const blob = new doc.defaultView.Blob([text], { type: "text/plain;charset=utf-8" });
+    const downloadURL = doc.defaultView.URL.createObjectURL(blob);
+    const link = doc.createElement("a");
+    const lastSegment = new doc.defaultView.URL(doc.defaultView.location.href)
+      .pathname.split("/").filter(Boolean).pop();
+    let filenameSegment = lastSegment || "document";
+    try {
+      filenameSegment = decodeURIComponent(filenameSegment);
+    } catch {
+      // Keep the encoded path segment if it contains malformed escapes.
+    }
+    filenameSegment = filenameSegment.replace(/[<>:"/\\|?*\u0000-\u001f]/g, "-");
+    link.href = downloadURL;
+    link.download = `review-${filenameSegment || "document"}.txt`;
+    link.hidden = true;
+    ui.append(link);
+    link.click();
+    link.remove();
+    doc.defaultView.setTimeout(() => doc.defaultView.URL.revokeObjectURL(downloadURL), 1000);
+    downloadReviewButton.textContent = "Downloading...";
+    downloadReviewButton.disabled = true;
+    doc.defaultView.setTimeout(() => {
+      downloadReviewButton.textContent = "Download Review";
+      downloadReviewButton.disabled = false;
+    }, 1800);
+  });
+  actionsPanel.append(downloadReviewButton);
 
   const commentsButton = doc.createElement("button");
   commentsButton.type = "button";
@@ -321,6 +358,8 @@ function initCommentButton(doc = document) {
   }
 
   function reviewText() {
+    if (comments.length === 1) return comments[0].text;
+
     const groups = [];
     for (const comment of comments) {
       let group = groups.at(-1);
@@ -385,6 +424,7 @@ function initCommentButton(doc = document) {
     if (githubIssueButton) githubIssueButton.disabled = disabled;
     if (emailButton) emailButton.disabled = disabled;
     copyReviewButton.disabled = disabled;
+    downloadReviewButton.disabled = disabled;
   }
 
   updateTypeButtons();

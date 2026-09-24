@@ -16,6 +16,6 @@ extensionAPI.action.onClicked.addListener(async tab => {
   } catch (error) {
     // Some browser pages, such as chrome:// URLs, do not allow extensions to
     // inject scripts. Keep the service worker alive without an unhandled error.
-    console.debug("RFC Comment could not be injected into this tab.", error);
+    console.debug("Comment content could not be injected into this tab.", error);
   }
 });
