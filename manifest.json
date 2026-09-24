@@ -3,6 +3,7 @@
   "name": "Spec Comment",
   "version": "0.1.0",
   "description": "Review specifications easily.",
+  "homepage_url": "https://github.com/martinthomson/spec-comment",
   "minimum_chrome_version": "121",
   "permissions": ["activeTab", "scripting"],
   "background": {

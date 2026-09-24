@@ -5,11 +5,15 @@ function createIcon(doc, name) {
   const shapes = {
     close: [["path", { d: "M6 6l12 12M18 6 6 18" }]],
     view: [
-      ["path", { d: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" }],
-      ["circle", { cx: "12", cy: "12", r: "3" }],
+      ["circle", { cx: "10.5", cy: "10.5", r: "6.5" }],
+      ["path", { d: "m15.5 15.5 5 5" }],
     ],
     edit: [
       ["path", { d: "m15 5 4 4M4 20l4.2-.8L20 7.4 16.6 4 4.8 15.8 4 20Z" }],
+    ],
+    issue: [
+      ["circle", { cx: "12", cy: "12", r: "9" }],
+      ["circle", { cx: "12", cy: "12", r: "1.5", class: "icon-dot" }],
     ],
     delete: [
       ["path", { d: "M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3" }],
@@ -102,7 +106,7 @@ function findGitHubRepository(doc) {
 function findAboutDocumentMailto(doc) {
   for (const area of aboutDocumentAreas(doc)) {
     const mailto = Array.from(area.querySelectorAll("a[href]")).find((link) =>
-      /^mailto:/i.test(link.getAttribute("href")),
+      (/^mailto:/i).test(link.getAttribute("href")),
     );
     if (mailto) return mailto.getAttribute("href");
   }
@@ -159,8 +163,8 @@ function initCommentButton(doc = document) {
   closeButton.type = "button";
   closeButton.classList.add("icon-button");
   closeButton.append(createIcon(doc, "close"));
-  closeButton.title = "Close comment editor";
-  closeButton.setAttribute("aria-label", "Close comment editor");
+  closeButton.title = "close comment editor";
+  closeButton.setAttribute("aria-label", "close comment editor");
 
   const typeGroup = doc.createElement("fieldset");
   typeGroup.setAttribute("role", "radiogroup");
@@ -192,8 +196,8 @@ function initCommentButton(doc = document) {
 
   const issueTitle = doc.createElement("input");
   issueTitle.type = "text";
-  issueTitle.placeholder = "(optional) issue title";
-  issueTitle.setAttribute("aria-label", "Optional issue title");
+  issueTitle.placeholder = "(optional) comment title";
+  issueTitle.setAttribute("aria-label", "optional comment title");
 
   const addButton = doc.createElement("button");
   addButton.type = "button";
@@ -492,13 +496,13 @@ function initCommentButton(doc = document) {
     return typeGroup.querySelector("input:checked")?.value || "Comment";
   }
 
-  function reviewText() {
-    function commentText(comment) {
-      return comment.title
-        ? `### ${comment.title}\n\n${comment.text}`
-        : comment.text;
-    }
+  function commentText(comment) {
+    return comment.title
+      ? `### ${comment.title}\n\n${comment.text}`
+      : comment.text;
+  }
 
+  function reviewText() {
     if (comments.length === 1) return commentText(comments[0]);
 
     const groups = [];
@@ -861,6 +865,24 @@ function initCommentButton(doc = document) {
         issueTitle.focus();
       });
 
+      let issueButton;
+      if (githubRepository) {
+        issueButton = doc.createElement("button");
+        issueButton.type = "button";
+        issueButton.classList.add("icon-button");
+        issueButton.append(createIcon(doc, "issue"));
+        issueButton.setAttribute("aria-label", "open GitHub issue for comment");
+        issueButton.title = "Open GitHub issue for comment";
+        issueButton.addEventListener("click", () => {
+          const issueURL = new doc.defaultView.URL(
+            `${githubRepository}/issues/new`,
+          );
+          issueURL.searchParams.set("title", comment.title || reviewTitle(doc));
+          issueURL.searchParams.set("body", comment.text);
+          doc.defaultView.open(issueURL.href, "_blank", "noopener,noreferrer");
+        });
+      }
+
       const deleteButton = doc.createElement("button");
       deleteButton.type = "button";
       deleteButton.classList.add("icon-button");
@@ -884,7 +906,9 @@ function initCommentButton(doc = document) {
         renderComments();
       });
 
-      actions.append(showButton, editButton, deleteButton);
+      actions.append(showButton, editButton);
+      if (issueButton) actions.append(issueButton);
+      actions.append(deleteButton);
       headerRow.append(commentType, actions);
       item.append(headerRow, content);
       commentsList.append(item);

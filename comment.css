@@ -78,6 +78,11 @@
       stroke-linecap: round;
       stroke-linejoin: round;
     }
+
+    .icon-dot {
+      fill: currentColor;
+      stroke: none;
+    }
   }
 
   button:not(:disabled),
