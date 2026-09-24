@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Spec Comment",
+  "version": "1.0.0",
+  "description": "Produce review comments for an HTML specification.",
+  "minimum_chrome_version": "121",
+  "permissions": ["activeTab", "scripting"],
+  "background": {
+    "scripts": ["background.js"],
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Spec Comment",
+    "default_icon": {
+      "16": "icons/comment-16.png",
+      "32": "icons/comment-32.png",
+      "48": "icons/comment-48.png",
+      "128": "icons/comment-128.png"
+    }
+  },
+  "icons": {
+    "48": "icons/comment-48.png",
+    "96": "icons/comment-96.png",
+    "128": "icons/comment-128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "rfc-comment@martinthomson.github.io",
+      "strict_min_version": "121.0"
+    }
+  }
+}

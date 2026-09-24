@@ -1,4 +1,5 @@
 const PANEL_WIDTH = 600;
+const PANEL_CONTENT_GAP = 20;
 
 function createIcon(doc, name) {
   const shapes = {
@@ -7,7 +8,9 @@ function createIcon(doc, name) {
       ["path", { d: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" }],
       ["circle", { cx: "12", cy: "12", r: "3" }],
     ],
-    delete: [["path", { d: "M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3" }]],
+    delete: [
+      ["path", { d: "M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3" }],
+    ],
   };
   const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 24 24");
@@ -24,51 +27,104 @@ function createIcon(doc, name) {
   return svg;
 }
 
+function aboutDocumentAreas(doc) {
+  const headings = Array.from(doc.querySelectorAll("h1, h2, h3, h4, h5, h6"));
+  const heading =
+    headings.find((element) => element.id === "name-about-this-document") ||
+    headings.find(
+      (element) =>
+        element.textContent.trim().toLowerCase() === "about this document",
+    );
+  if (heading) {
+    const section = heading.closest("section");
+    return section ? [section] : [];
+  }
+
+  const feedback = Array.from(doc.querySelectorAll("div.head dl dt")).find(
+    (element) =>
+      ["Feedback", "Feedback:", "Participate", "Participate:"].includes(
+        element.textContent.trim(),
+      ),
+  );
+  const areas = [];
+  for (
+    let sibling = feedback?.nextElementSibling;
+    sibling && sibling.tagName !== "DT";
+    sibling = sibling.nextElementSibling
+  ) {
+    if (sibling.tagName === "DD") areas.push(sibling);
+  }
+  return areas;
+}
+
 function findGitHubRepository(doc) {
-  for (const link of doc.querySelectorAll("a[href]")) {
-    let linkURL;
-    try {
-      linkURL = new doc.defaultView.URL(link.href, doc.defaultView.location.href);
-    } catch {
-      continue;
+  for (const area of aboutDocumentAreas(doc)) {
+    for (const link of area.querySelectorAll("a[href]")) {
+      let linkURL;
+      try {
+        linkURL = new doc.defaultView.URL(
+          link.href,
+          doc.defaultView.location.href,
+        );
+      } catch {
+        continue;
+      }
+      if (linkURL.hostname !== "github.com") continue;
+
+      if (area.tagName !== "DD") {
+        const context = link.closest("p");
+        if (!context) continue;
+        const prefix = doc.createRange();
+        prefix.selectNodeContents(context);
+        prefix.setEndBefore(link);
+        if (
+          !/Source for this draft[\s\S]*\bcan be found at\s*$/i.test(
+            prefix.toString(),
+          )
+        )
+          continue;
+      }
+
+      const repositoryPath = linkURL.pathname
+        .replace(/\/issues\/?$/i, "")
+        .replace(/\/+$/, "");
+      const [owner, repository] = repositoryPath.split("/").filter(Boolean);
+      if (!owner || !repository) continue;
+      return `https://github.com/${owner}/${repository.replace(/\.git$/i, "")}`;
     }
-    if (linkURL.hostname !== "github.com") continue;
-
-    const context = link.closest("p");
-    if (!context) continue;
-    const prefix = doc.createRange();
-    prefix.selectNodeContents(context);
-    prefix.setEndBefore(link);
-    if (!/Source for this draft[\s\S]*\bcan be found at\s*$/i.test(prefix.toString())) continue;
-
-    const [owner, repository] = linkURL.pathname.split("/").filter(Boolean);
-    if (!owner || !repository) continue;
-    return `https://github.com/${owner}/${repository.replace(/\.git$/i, "")}`;
   }
   return null;
 }
 
 function findAboutDocumentMailto(doc) {
-  const headings = Array.from(doc.querySelectorAll("h1, h2, h3, h4, h5, h6"));
-  const heading = headings.find(element => element.id === "name-about-this-document") ||
-    headings.find(element => element.textContent.trim().toLowerCase() === "about this document");
-  const section = heading?.closest("section");
-  return Array.from(section?.querySelectorAll("a[href]") || [])
-    .find(link => (/^mailto:/i).test(link.getAttribute("href")))
-    ?.getAttribute("href") || null;
+  for (const area of aboutDocumentAreas(doc)) {
+    const mailto = Array.from(area.querySelectorAll("a[href]")).find((link) =>
+      /^mailto:/i.test(link.getAttribute("href")),
+    );
+    if (mailto) return mailto.getAttribute("href");
+  }
+  return null;
 }
 
 function reviewTitle(doc) {
-  const name = doc.querySelector("dl#identifiers > dd.rfc")?.textContent.trim() ||
-    doc.querySelector("dl#identifiers > dd.internet-draft")?.textContent.trim();
+  const rfc = doc.querySelector("dl#identifiers > dd.rfc")?.textContent.trim();
+  const name = rfc
+    ? `RFC ${rfc}`
+    : doc
+        .querySelector("dl#identifiers > dd.internet-draft")
+        ?.textContent.trim();
+  const title = doc.querySelector("h1#title")?.textContent.trim();
   const pathName = decodeURIComponent(
     new doc.defaultView.URL(doc.defaultView.location.href).pathname,
-  ).split("/").filter(Boolean).pop();
-  return `Review of ${name || pathName || ""}`;
+  )
+    .split("/")
+    .filter(Boolean)
+    .pop();
+  return `Review of ${name || title || pathName || ""}`;
 }
 
 /** Add a selection-triggered Comment button to an RFC HTML document. */
-export function initCommentButton(doc = document) {
+function initCommentButton(doc = document) {
   const existing = doc.querySelector("[data-rfc-comment-button]");
   if (existing) return () => {};
 
@@ -82,7 +138,7 @@ export function initCommentButton(doc = document) {
   button.setAttribute("data-rfc-comment-button", "");
   button.setAttribute("aria-label", "Comment on selected text");
   // Keep the document selection when the button is pressed.
-  button.addEventListener("mousedown", event => event.preventDefault());
+  button.addEventListener("mousedown", (event) => event.preventDefault());
   ui.append(button);
 
   const panel = doc.createElement("aside");
@@ -150,7 +206,9 @@ export function initCommentButton(doc = document) {
     githubIssueButton.disabled = true;
     githubIssueButton.addEventListener("click", () => {
       commitCurrentComment();
-      const issueURL = new doc.defaultView.URL(`${githubRepository}/issues/new`);
+      const issueURL = new doc.defaultView.URL(
+        `${githubRepository}/issues/new`,
+      );
       issueURL.searchParams.set("title", reviewTitle(doc));
       issueURL.searchParams.set("body", reviewText());
       doc.defaultView.open(issueURL.href, "_blank", "noopener,noreferrer");
@@ -166,10 +224,17 @@ export function initCommentButton(doc = document) {
     emailButton.disabled = true;
     emailButton.addEventListener("click", () => {
       commitCurrentComment();
-      const emailURL = new doc.defaultView.URL(mailingListLink, doc.defaultView.location.href);
+      const emailURL = new doc.defaultView.URL(
+        mailingListLink,
+        doc.defaultView.location.href,
+      );
       emailURL.searchParams.set("subject", reviewTitle(doc));
       emailURL.searchParams.set("body", reviewText());
-      doc.defaultView.location.href = emailURL.href;
+      const emailHref = emailURL.href.replace(
+        /([?&](?:subject|body)=)[^&]*/gi,
+        (parameter) => parameter.replace(/\+/g, "%20"),
+      );
+      doc.defaultView.open(emailHref, "_blank", "noopener,noreferrer");
     });
     actionsPanel.append(emailButton);
   }
@@ -200,32 +265,45 @@ export function initCommentButton(doc = document) {
       temporary.remove();
     }
     copyReviewButton.textContent = copied ? "Copied!" : "Copy failed";
-    doc.defaultView.setTimeout(() => { copyReviewButton.textContent = "Copy Review"; }, 1800);
+    doc.defaultView.setTimeout(() => {
+      copyReviewButton.textContent = "Copy Review";
+    }, 1800);
   });
   actionsPanel.append(copyReviewButton);
 
   const commentsButton = doc.createElement("button");
   commentsButton.type = "button";
   commentsButton.setAttribute("data-comment-list-button", "");
-  commentsButton.setAttribute("aria-label", "Open saved comments");
-  commentsButton.addEventListener("mousedown", event => event.preventDefault());
+  commentsButton.textContent = "No comments";
+  commentsButton.setAttribute("aria-label", "No comments");
+  commentsButton.classList.add("is-visible");
+  commentsButton.addEventListener("mousedown", (event) =>
+    event.preventDefault(),
+  );
   commentsButton.addEventListener("click", openPanel);
 
   panelHeader.append(heading, closeButton);
-  panel.append(panelHeader, typeGroup, editor, addButton, commentsList, actionsPanel);
+  panel.append(
+    panelHeader,
+    typeGroup,
+    editor,
+    addButton,
+    commentsList,
+    actionsPanel,
+  );
   ui.append(panel, commentsButton);
 
   const comments = [];
   let visible = false;
   let panelOpen = false;
+  let changedTocLayout = false;
   let activeSelection = null;
   let nextCommentId = 1;
   let shiftAmount = 0;
   const originalBodyPosition = doc.body.style.position;
   const originalBodyLeft = doc.body.style.left;
-  const originalComputedLeft = Number.parseFloat(
-    doc.defaultView.getComputedStyle(doc.body).left,
-  ) || 0;
+  const originalComputedLeft =
+    Number.parseFloat(doc.defaultView.getComputedStyle(doc.body).left) || 0;
   const toc = doc.getElementById("toc");
   const originalTocRight = toc?.style.right ?? "";
   const originalTocVisibility = toc?.style.visibility ?? "";
@@ -252,10 +330,12 @@ export function initCommentButton(doc = document) {
       }
       group.comments.push(comment.text);
     }
-    return groups.map(group => {
-      const heading = `${group.type}${group.comments.length > 1 ? "s" : ""}`;
-      return `## ${heading}\n\n${group.comments.join("\n\n")}`;
-    }).join("\n\n");
+    return groups
+      .map((group) => {
+        const heading = `${group.type}${group.comments.length > 1 ? "s" : ""}`;
+        return `## ${heading}\n\n${group.comments.join("\n\n")}`;
+      })
+      .join("\n\n");
   }
 
   function updateSelectionHighlights() {
@@ -267,8 +347,8 @@ export function initCommentButton(doc = document) {
     for (const type of types) {
       const name = `rfc-comment-${type.toLowerCase().replace(/\s+/g, "-")}`;
       const ranges = comments
-        .filter(comment => comment.type === type && comment.range)
-        .map(comment => comment.range);
+        .filter((comment) => comment.type === type && comment.range)
+        .map((comment) => comment.range);
       if (ranges.length) {
         cssHighlights.set(name, new HighlightConstructor(...ranges));
       } else {
@@ -278,7 +358,12 @@ export function initCommentButton(doc = document) {
   }
 
   function sortComments() {
-    const typeOrder = { "Major Issue": 0, "Minor Issue": 1, Comment: 2, Nit: 3 };
+    const typeOrder = {
+      "Major Issue": 0,
+      "Minor Issue": 1,
+      Comment: 2,
+      Nit: 3,
+    };
     comments.sort((a, b) => {
       const typeDifference = typeOrder[a.type] - typeOrder[b.type];
       if (typeDifference) return typeDifference;
@@ -341,8 +426,7 @@ export function initCommentButton(doc = document) {
 
     button.classList.add("is-visible");
     const buttonRect = button.getBoundingClientRect();
-    const bodyRect = doc.body.getBoundingClientRect();
-    const left = Math.max(8, bodyRect.left - buttonRect.width - 12);
+    const left = Math.max(8, line.left - buttonRect.width - 8);
     const top = Math.min(
       Math.max(8, line.top + (line.height - buttonRect.height) / 2),
       doc.defaultView.innerHeight - buttonRect.height - 8,
@@ -385,28 +469,62 @@ export function initCommentButton(doc = document) {
   }
 
   function commentTemplate(selection = doc.getSelection()) {
-    if (!selection || selection.isCollapsed || !selection.toString().trim()) return "";
+    if (!selection || selection.isCollapsed || !selection.toString().trim())
+      return "";
 
     const start = selection.getRangeAt(0).startContainer;
-    const startElement = start.nodeType === doc.defaultView.Node.ELEMENT_NODE
-      ? start
-      : start.parentElement;
+    const startElement =
+      start.nodeType === doc.defaultView.Node.ELEMENT_NODE
+        ? start
+        : start.parentElement;
     if (!startElement || !doc.body.contains(startElement)) return "";
 
     const section = startElement.closest("section");
-    const heading = section && Array.from(section.children).find(element =>
-      /^H[1-6]$/.test(element.tagName),
-    );
+    let heading =
+      section &&
+      Array.from(section.children).find((element) =>
+        /^H[1-6]$/.test(element.tagName),
+      );
+    if (!section) {
+      let ancestor = startElement;
+      while (
+        ancestor &&
+        ancestor !== doc.body &&
+        ancestor.tagName !== "MAIN" &&
+        !heading
+      ) {
+        for (
+          let sibling = ancestor.previousElementSibling;
+          sibling;
+          sibling = sibling.previousElementSibling
+        ) {
+          if (/^H[1-6]$/.test(sibling.tagName)) {
+            heading = sibling;
+            break;
+          }
+        }
+        ancestor = ancestor.parentElement;
+      }
+    }
     const sectionId = section?.id || heading?.id;
 
     const table = startElement.closest("table");
     const figure = startElement.closest("figure");
+    const algorithm = startElement.closest("div.algorithm");
     const paragraph = startElement.closest("p");
-    const target = table || figure || paragraph;
+    const target = table || figure || algorithm || paragraph;
     const targetSection = target?.closest("section") || section;
-    const sectionNumber = targetSection
+    let sectionNumber = targetSection
       ?.querySelector(":is(h1, h2, h3, h4) a.selfRef")
-      ?.textContent.trim().replace(/\.$/, "");
+      ?.textContent.trim()
+      .replace(/\.$/, "");
+    if (!section && heading) {
+      sectionNumber =
+        heading
+          .querySelector(":scope > span.secno")
+          ?.textContent.trim()
+          .replace(/\.$/, "") || heading.textContent.trim();
+    }
 
     let sectionLabel;
     if (sectionId) {
@@ -416,24 +534,47 @@ export function initCommentButton(doc = document) {
       } else if (sectionNumber) {
         sectionLabel = `Section ${sectionNumber}`;
       } else {
-        const number = heading?.querySelector(".section-number")?.textContent.trim().replace(/[.\\s]+$/, "");
-        sectionLabel = number ? `Section ${number}` : heading?.textContent.trim() || "Section";
+        const number = heading
+          ?.querySelector(".section-number")
+          ?.textContent.trim()
+          .replace(/[.\\s]+$/, "");
+        sectionLabel = number
+          ? `Section ${number}`
+          : heading?.textContent.trim() || "Section";
       }
     }
 
     let targetLabel;
     if (target?.id && (table || figure)) {
       const kind = table ? "Table" : "Figure";
-      const captionRef = target.querySelector(table
-        ? "caption a.selfRef"
-        : "figcaption a.selfRef");
-      const number = captionRef?.textContent.trim()
+      const captionRef = target.querySelector(
+        table ? "caption a.selfRef" : "figcaption a.selfRef",
+      );
+      const number = captionRef?.textContent
+        .trim()
         .match(/(?:figure|table)?\s*(\d+(?:\.\d+)*)/i)?.[1];
       targetLabel = number ? `${kind} ${number}` : kind;
+    } else if (algorithm) {
+      const stepNumbers = [];
+      let listItem = startElement.closest("li");
+      while (listItem && algorithm.contains(listItem)) {
+        const list = listItem.parentElement;
+        if (list?.tagName === "OL") {
+          const items = Array.from(list.children).filter(
+            (element) => element.tagName === "LI",
+          );
+          const index = items.indexOf(listItem);
+          if (index >= 0) stepNumbers.unshift(index + 1);
+        }
+        listItem = list?.parentElement?.closest("li") || null;
+      }
+      const step = stepNumbers.length ? ` step ${stepNumbers.join(".")}` : "";
+      targetLabel = `Algorithm "${algorithm.getAttribute("data-algorithm")}"${step}`;
     } else if (paragraph?.id) {
-      if (paragraph.parentElement.tagName === 'SECTION') {
-        const paragraphs = Array.from(paragraph.parentElement.children)
-          .filter(element => element.tagName === "P");
+      if (paragraph.parentElement.tagName === "SECTION") {
+        const paragraphs = Array.from(paragraph.parentElement.children).filter(
+          (element) => element.tagName === "P",
+        );
         const paragraphNumber = paragraphs.indexOf(paragraph) + 1;
         if (paragraphNumber > 0) {
           targetLabel = `Paragraph ${paragraphNumber}`;
@@ -442,21 +583,41 @@ export function initCommentButton(doc = document) {
       targetLabel ??= "this text";
     }
 
-    const quote = selection.toString().trim().replace(/\r\n?/g, "\n")
-          .split("\n").map(line => `> ${line}`).join("\n");
+    const quote = selection
+      .toString()
+      .trim()
+      .replace(/\r\n?/g, "\n")
+      .split("\n")
+      .map((line) => `> ${line}`)
+      .join("\n");
     const sectionLink = sectionId
       ? new URL(`#${encodeURIComponent(sectionId)}`, window.location.href)
       : null;
     let targetLink;
-    if (targetLabel && target?.id) {
-      const pilcrowHref = paragraph?.querySelector("a.pilcrow")?.getAttribute("href");
+    if (targetLabel && target === algorithm) {
+      const algorithmTarget = algorithm.querySelector("dfn[id]") || algorithm;
+      if (algorithmTarget.id) {
+        targetLink = new URL(
+          `#${encodeURIComponent(algorithmTarget.id)}`,
+          window.location.href,
+        );
+      }
+    } else if (targetLabel && target?.id) {
+      const pilcrowHref = paragraph
+        ?.querySelector("a.pilcrow")
+        ?.getAttribute("href");
       targetLink = new URL(
         pilcrowHref ? pilcrowHref : `#${encodeURIComponent(target.id)}`,
         window.location.href,
       );
     }
-    const targetReference = sectionId && targetLink ? ` [${targetLabel}](${targetLink})` : "";
-    const leadIn = sectionLink ? `In [${sectionLabel}](${sectionLink})${targetReference}:\n\n` : "";
+    const targetReference =
+      sectionId && targetLabel
+        ? ` [${targetLabel}]${targetLink ? `(${targetLink})` : ""}`
+        : "";
+    const leadIn = sectionLink
+      ? `In [${sectionLabel}](${sectionLink})${targetReference}:\n\n`
+      : "";
     return `${leadIn}${quote}\n\n`;
   }
 
@@ -467,17 +628,16 @@ export function initCommentButton(doc = document) {
     const selection = doc.getSelection();
     selection.removeAllRanges();
     selection.addRange(range);
-    const start = range.startContainer.nodeType === doc.defaultView.Node.ELEMENT_NODE
-      ? range.startContainer
-      : range.startContainer.parentElement;
+    const start =
+      range.startContainer.nodeType === doc.defaultView.Node.ELEMENT_NODE
+        ? range.startContainer
+        : range.startContainer.parentElement;
     start?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   function renderComments() {
     commentsList.replaceChildren();
-    comments.forEach((comment, index) => {
-      commentsList.append(doc.createElement("hr"));
-
+    comments.forEach((comment) => {
       const item = doc.createElement("div");
       item.setAttribute("role", "listitem");
       item.classList.add(comment.type.toLowerCase().replace(/\s+/g, "-"));
@@ -508,7 +668,9 @@ export function initCommentButton(doc = document) {
       deleteButton.setAttribute("aria-label", "delete comment");
       deleteButton.title = "delete comment";
       deleteButton.addEventListener("click", () => {
-        const commentIndex = comments.findIndex(saved => saved.id === comment.id);
+        const commentIndex = comments.findIndex(
+          (saved) => saved.id === comment.id,
+        );
         if (commentIndex !== -1) comments.splice(commentIndex, 1);
         updateSelectionHighlights();
         renderComments();
@@ -519,8 +681,12 @@ export function initCommentButton(doc = document) {
       item.append(headerRow, content);
       commentsList.append(item);
     });
-    commentsButton.textContent = `Comments (${comments.length})`;
-    commentsButton.classList.toggle("is-visible", comments.length > 0);
+    const commentsLabel = comments.length
+      ? `Comments (${comments.length})`
+      : "No comments";
+    commentsButton.textContent = commentsLabel;
+    commentsButton.setAttribute("aria-label", commentsLabel);
+    commentsButton.classList.add("is-visible");
     updateActionButtons();
   }
 
@@ -549,21 +715,30 @@ export function initCommentButton(doc = document) {
   function layoutPanel() {
     const bodyRect = doc.body.getBoundingClientRect();
     const viewportWidth = doc.defaultView.innerWidth;
-    const panelWidth = panel.getBoundingClientRect().width || Math.min(PANEL_WIDTH, viewportWidth);
+    const panelWidth =
+      panel.getBoundingClientRect().width ||
+      Math.min(PANEL_WIDTH, viewportWidth);
     const baseLeft = bodyRect.left - shiftAmount;
     const baseRight = bodyRect.right - shiftAmount;
     const leftMargin = Math.max(0, baseLeft);
     const rightMargin = Math.max(0, viewportWidth - baseRight);
     const neededShift = Math.max(0, panelWidth - leftMargin);
     const canShift = neededShift <= rightMargin;
+    const contentGap = canShift
+      ? Math.min(PANEL_CONTENT_GAP, rightMargin - neededShift)
+      : 0;
 
-    setShift(canShift ? neededShift : 0);
+    setShift(canShift ? neededShift + contentGap : 0);
     adjustToc(shiftAmount);
     panel.style.left = "0px";
   }
 
   function openPanel() {
     if (!panelOpen) {
+      changedTocLayout = doc.body.classList.replace(
+        "toc-sidebar",
+        "toc-inline",
+      );
       typeInputs.get("Comment").checked = true;
       updateTypeButtons();
       activeSelection = captureSelection();
@@ -579,6 +754,10 @@ export function initCommentButton(doc = document) {
   function closePanel() {
     panelOpen = false;
     panel.classList.remove("is-open");
+    if (changedTocLayout) {
+      doc.body.classList.replace("toc-inline", "toc-sidebar");
+      changedTocLayout = false;
+    }
     editor.value = "";
     activeSelection = null;
     updateActionButtons();
@@ -588,20 +767,36 @@ export function initCommentButton(doc = document) {
   }
 
   function isEditable(target) {
-    return target instanceof doc.defaultView.Element && Boolean(
-      target.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"),
+    return (
+      target instanceof doc.defaultView.Element &&
+      Boolean(
+        target.closest(
+          "input, textarea, select, [contenteditable]:not([contenteditable='false'])",
+        ),
+      )
     );
   }
 
   function onKeyDown(event) {
-    if ((event.key === "Escape" || event.key === "Esc" || event.code === "Escape") && panelOpen) {
+    if (
+      (event.key === "Escape" ||
+        event.key === "Esc" ||
+        event.code === "Escape") &&
+      panelOpen
+    ) {
       event.preventDefault();
       event.stopPropagation();
       closePanel();
       return;
     }
-    if (event.key.toLowerCase() !== "c" || event.ctrlKey || event.altKey || event.metaKey ||
-        isEditable(event.target)) return;
+    if (
+      event.key.toLowerCase() !== "c" ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.metaKey ||
+      isEditable(event.target)
+    )
+      return;
 
     const selection = doc.getSelection();
     if (selection && !selection.isCollapsed && selection.toString()) {
@@ -614,7 +809,7 @@ export function initCommentButton(doc = document) {
   closeButton.addEventListener("click", closePanel);
   addButton.addEventListener("click", addComment);
   editor.addEventListener("input", updateActionButtons);
-  editor.addEventListener("keydown", event => {
+  editor.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && event.ctrlKey) {
       event.preventDefault();
       addComment();
@@ -632,8 +827,8 @@ export function initCommentButton(doc = document) {
   doc.defaultView.addEventListener("resize", reposition);
   const panelResizeObserver = doc.defaultView.ResizeObserver
     ? new doc.defaultView.ResizeObserver(() => {
-      if (panelOpen) layoutPanel();
-    })
+        if (panelOpen) layoutPanel();
+      })
     : null;
   panelResizeObserver?.observe(panel);
 
@@ -653,4 +848,6 @@ export function initCommentButton(doc = document) {
   };
 }
 
+globalThis.RFCComment ||= {};
+globalThis.RFCComment.initCommentButton = initCommentButton;
 initCommentButton();
