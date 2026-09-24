@@ -23,6 +23,10 @@ a fresh GitHub issue or email can be created.
 The review is presented in markdown format
 in a form roughly compatible with [ietf-comments](https://github.com/mnot/ietf-comments/blob/main/format.md).
 
+View a sample usage on copies of
+[an IETF spec](https://martinthomson.github.io/spec-comment/sample-ietf.html)
+or [a W3C spec](https://martinthomson.github.io/spec-comment/sample-w3c.html).
+
 ## Debugging the extension
 
 ### Firefox
