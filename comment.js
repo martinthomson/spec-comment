@@ -8,7 +8,9 @@ function createIcon(doc, name) {
       ["path", { d: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" }],
       ["circle", { cx: "12", cy: "12", r: "3" }],
     ],
-    edit: [["path", { d: "m15 5 4 4M4 20l4.2-.8L20 7.4 16.6 4 4.8 15.8 4 20Z" }]],
+    edit: [
+      ["path", { d: "m15 5 4 4M4 20l4.2-.8L20 7.4 16.6 4 4.8 15.8 4 20Z" }],
+    ],
     delete: [
       ["path", { d: "M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3" }],
     ],
@@ -286,25 +288,36 @@ function initCommentButton(doc = document) {
   downloadReviewButton.addEventListener("click", () => {
     commitCurrentComment();
     const text = `# ${reviewTitle(doc)}\n\n${reviewText()}`;
-    const blob = new doc.defaultView.Blob([text], { type: "text/plain;charset=utf-8" });
+    const blob = new doc.defaultView.Blob([text], {
+      type: "text/plain;charset=utf-8",
+    });
     const downloadURL = doc.defaultView.URL.createObjectURL(blob);
     const link = doc.createElement("a");
-    const lastSegment = new doc.defaultView.URL(doc.defaultView.location.href)
-      .pathname.split("/").filter(Boolean).pop();
+    const lastSegment = new doc.defaultView.URL(
+      doc.defaultView.location.href,
+    ).pathname
+      .split("/")
+      .filter(Boolean)
+      .pop();
     let filenameSegment = lastSegment || "document";
     try {
       filenameSegment = decodeURIComponent(filenameSegment);
     } catch {
       // Keep the encoded path segment if it contains malformed escapes.
     }
-    filenameSegment = filenameSegment.replace(/[<>:"/\\|?*\u0000-\u001f]/g, "-");
+    filenameSegment = filenameSegment
+      .replace(/\.\w+$/, "")
+      .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "-");
     link.href = downloadURL;
     link.download = `review-${filenameSegment || "document"}.txt`;
     link.hidden = true;
     ui.append(link);
     link.click();
     link.remove();
-    doc.defaultView.setTimeout(() => doc.defaultView.URL.revokeObjectURL(downloadURL), 1000);
+    doc.defaultView.setTimeout(
+      () => doc.defaultView.URL.revokeObjectURL(downloadURL),
+      1000,
+    );
     downloadReviewButton.textContent = "Downloading...";
     downloadReviewButton.disabled = true;
     doc.defaultView.setTimeout(() => {
@@ -352,6 +365,120 @@ function initCommentButton(doc = document) {
   const toc = doc.getElementById("toc");
   const originalTocRight = toc?.style.right ?? "";
   const originalTocVisibility = toc?.style.visibility ?? "";
+  const reviewURL = new doc.defaultView.URL(doc.defaultView.location.href);
+  reviewURL.hash = "";
+  const reviewKey = reviewURL.href;
+  const indexedDB = doc.defaultView.indexedDB;
+  const databasePromise = indexedDB
+    ? new Promise((resolve, reject) => {
+        const request = indexedDB.open("spec-comment-reviews", 1);
+        request.onupgradeneeded = () => {
+          if (!request.result.objectStoreNames.contains("reviews")) {
+            request.result.createObjectStore("reviews", { keyPath: "url" });
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      }).catch((error) => {
+        console.warn("Spec Comment could not open its comment store.", error);
+        return null;
+      })
+    : Promise.resolve(null);
+  let commentsChanged = false;
+  let disposed = false;
+
+  function nodePath(root, node) {
+    const path = [];
+    while (node && node !== root) {
+      const parent = node.parentNode;
+      if (!parent) return null;
+      const index = Array.prototype.indexOf.call(parent.childNodes, node);
+      if (index < 0) return null;
+      path.unshift(index);
+      node = parent;
+    }
+    return node === root ? path : null;
+  }
+
+  function rangeRecord(range) {
+    if (!range) return null;
+    const startPath = nodePath(doc.body, range.startContainer);
+    const endPath = nodePath(doc.body, range.endContainer);
+    if (!startPath || !endPath) return null;
+    return {
+      startPath,
+      startOffset: range.startOffset,
+      endPath,
+      endOffset: range.endOffset,
+    };
+  }
+
+  function restoreComment(record) {
+    let range = null;
+    if (record.range) {
+      const resolvePath = (path) => path.reduce(
+        (node, index) => node?.childNodes[index] || null,
+        doc.body,
+      );
+      try {
+        const start = resolvePath(record.range.startPath);
+        const end = resolvePath(record.range.endPath);
+        if (start && end) {
+          const candidate = doc.createRange();
+          candidate.setStart(start, record.range.startOffset);
+          candidate.setEnd(end, record.range.endOffset);
+          if (candidate.toString() === record.selection) range = candidate;
+        }
+      } catch {
+        // Keep the saved comment even if its selection no longer maps to the page.
+      }
+    }
+    return { ...record, title: record.title || "", range };
+  }
+
+  function persistComments() {
+    commentsChanged = true;
+    const savedComments = comments.map((comment) => ({
+      ...comment,
+      range: rangeRecord(comment.range),
+    }));
+    databasePromise.then((database) => {
+      if (!database) return;
+      const transaction = database.transaction("reviews", "readwrite");
+      transaction.objectStore("reviews").put({
+        url: reviewKey,
+        comments: savedComments,
+      });
+      transaction.onerror = () => {
+        console.warn("Spec Comment could not save comments.", transaction.error);
+      };
+    }).catch((error) => {
+      console.warn("Spec Comment could not save comments.", error);
+    });
+  }
+
+  function loadComments() {
+    databasePromise.then((database) => {
+      if (!database || disposed) return;
+      const transaction = database.transaction("reviews", "readonly");
+      const request = transaction.objectStore("reviews").get(reviewKey);
+      request.onsuccess = () => {
+        if (commentsChanged || disposed || !Array.isArray(request.result?.comments)) {
+          return;
+        }
+        comments.push(...request.result.comments.map(restoreComment));
+        sortComments();
+        nextCommentId = Math.max(0, ...comments.map((comment) => Number(comment.id) || 0)) + 1;
+        updateSelectionHighlights();
+        renderComments();
+      };
+      request.onerror = () => {
+        console.warn("Spec Comment could not load saved comments.", request.error);
+      };
+    }).catch((error) => {
+      console.warn("Spec Comment could not load saved comments.", error);
+    });
+  }
 
   function updateTypeButtons() {
     for (const [type, radio] of typeInputs) {
@@ -752,6 +879,7 @@ function initCommentButton(doc = document) {
           (saved) => saved.id === comment.id,
         );
         if (commentIndex !== -1) comments.splice(commentIndex, 1);
+        if (commentIndex !== -1) persistComments();
         updateSelectionHighlights();
         renderComments();
       });
@@ -791,6 +919,7 @@ function initCommentButton(doc = document) {
     }
     editingCommentId = null;
     sortComments();
+    persistComments();
     updateSelectionHighlights();
     issueTitle.value = "";
     editor.value = "";
@@ -934,8 +1063,14 @@ function initCommentButton(doc = document) {
       })
     : null;
   panelResizeObserver?.observe(panel);
+  loadComments();
+  const initialSelection = doc.getSelection();
+  if (initialSelection && !initialSelection.isCollapsed && initialSelection.toString()) {
+    openPanel();
+  }
 
   return () => {
+    disposed = true;
     doc.removeEventListener("selectionchange", update);
     doc.removeEventListener("keydown", onKeyDown, true);
     doc.defaultView.removeEventListener("scroll", reposition);
