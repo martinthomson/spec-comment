@@ -25,7 +25,7 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "rfc-comment@martinthomson.github.io",
+      "id": "spec-comment@martinthomson.github.io",
       "strict_min_version": "121.0"
     }
   }

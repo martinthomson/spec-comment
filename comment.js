@@ -123,7 +123,7 @@ function reviewTitle(doc) {
   return `Review of ${name || title || pathName || ""}`;
 }
 
-/** Add a selection-triggered Comment button to an RFC HTML document. */
+/** Add a selection-triggered Comment button to any HTML document. */
 function initCommentButton(doc = document) {
   const existing = doc.querySelector("[data-spec-comment-button]");
   if (existing) return () => {};
@@ -888,6 +888,6 @@ function initCommentButton(doc = document) {
   };
 }
 
-globalThis.RFCComment ||= {};
-globalThis.RFCComment.initCommentButton = initCommentButton;
+globalThis.SpecComment ||= {};
+globalThis.SpecComment.initCommentButton = initCommentButton;
 initCommentButton();
