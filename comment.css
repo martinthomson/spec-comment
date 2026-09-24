@@ -71,11 +71,13 @@
     width: 1.15em;
     max-width: initial;
     height: 1.15em;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    & :is(path, circle) {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
   }
 
   button:not(:disabled),
@@ -206,6 +208,18 @@
       }
     }
 
+    > input[type="text"] {
+      box-sizing: border-box;
+      width: 100%;
+      font: inherit;
+    }
+
+    input[type="text"],
+    textarea {
+      border: 1px solid #777;
+      border-radius: 3px;
+    }
+
     > textarea {
       box-sizing: border-box;
       width: 100%;
@@ -235,6 +249,12 @@
         gap: 8px;
         padding: 8px 0 8px 8px;
         border-left: 3px solid var(--type-color, transparent);
+
+        &.is-editing {
+          background: rgba(125 125 125 0.4);
+          outline: 2px solid currentColor;
+          outline-offset: 2px;
+        }
 
         header {
           display: flex;

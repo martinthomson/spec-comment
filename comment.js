@@ -8,6 +8,7 @@ function createIcon(doc, name) {
       ["path", { d: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" }],
       ["circle", { cx: "12", cy: "12", r: "3" }],
     ],
+    edit: [["path", { d: "m15 5 4 4M4 20l4.2-.8L20 7.4 16.6 4 4.8 15.8 4 20Z" }]],
     delete: [
       ["path", { d: "M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3" }],
     ],
@@ -187,6 +188,11 @@ function initCommentButton(doc = document) {
   editor.setAttribute("aria-label", "Comment text");
   editor.rows = 12;
 
+  const issueTitle = doc.createElement("input");
+  issueTitle.type = "text";
+  issueTitle.placeholder = "(optional) issue title";
+  issueTitle.setAttribute("aria-label", "Optional issue title");
+
   const addButton = doc.createElement("button");
   addButton.type = "button";
   addButton.textContent = "Add Comment";
@@ -323,6 +329,7 @@ function initCommentButton(doc = document) {
   panel.append(
     panelHeader,
     typeGroup,
+    issueTitle,
     editor,
     addButton,
     commentsList,
@@ -331,6 +338,7 @@ function initCommentButton(doc = document) {
   ui.append(panel, commentsButton);
 
   const comments = [];
+  let editingCommentId = null;
   let visible = false;
   let panelOpen = false;
   let changedTocLayout = false;
@@ -358,7 +366,13 @@ function initCommentButton(doc = document) {
   }
 
   function reviewText() {
-    if (comments.length === 1) return comments[0].text;
+    function commentText(comment) {
+      return comment.title
+        ? `### ${comment.title}\n\n${comment.text}`
+        : comment.text;
+    }
+
+    if (comments.length === 1) return commentText(comments[0]);
 
     const groups = [];
     for (const comment of comments) {
@@ -367,12 +381,12 @@ function initCommentButton(doc = document) {
         group = { type: comment.type, comments: [] };
         groups.push(group);
       }
-      group.comments.push(comment.text);
+      group.comments.push(comment);
     }
     return groups
       .map((group) => {
         const heading = `${group.type}${group.comments.length > 1 ? "s" : ""}`;
-        return `## ${heading}\n\n${group.comments.join("\n\n")}`;
+        return `## ${heading}\n\n${group.comments.map(commentText).join("\n\n")}`;
       })
       .join("\n\n");
   }
@@ -681,12 +695,13 @@ function initCommentButton(doc = document) {
       const item = doc.createElement("div");
       item.setAttribute("role", "listitem");
       item.classList.add(comment.type.toLowerCase().replace(/\s+/g, "-"));
+      if (comment.id === editingCommentId) item.classList.add("is-editing");
 
       const headerRow = doc.createElement("header");
 
       const content = doc.createElement("pre");
       const commentType = doc.createElement("strong");
-      commentType.textContent = comment.type;
+      commentType.textContent = comment.title || comment.type;
       content.textContent = comment.text;
 
       const actions = doc.createElement("div");
@@ -701,6 +716,24 @@ function initCommentButton(doc = document) {
       showButton.title = "show text";
       showButton.addEventListener("click", () => showCommentText(comment));
 
+      const editButton = doc.createElement("button");
+      editButton.type = "button";
+      editButton.classList.add("icon-button");
+      editButton.append(createIcon(doc, "edit"));
+      editButton.setAttribute("aria-label", "edit comment");
+      editButton.title = "edit comment";
+      editButton.addEventListener("click", () => {
+        editingCommentId = comment.id;
+        issueTitle.value = comment.title || "";
+        editor.value = comment.text;
+        typeInputs.get(comment.type).checked = true;
+        updateTypeButtons();
+        activeSelection = { text: comment.selection, range: comment.range };
+        addButton.textContent = "Update Comment";
+        renderComments();
+        issueTitle.focus();
+      });
+
       const deleteButton = doc.createElement("button");
       deleteButton.type = "button";
       deleteButton.classList.add("icon-button");
@@ -708,6 +741,13 @@ function initCommentButton(doc = document) {
       deleteButton.setAttribute("aria-label", "delete comment");
       deleteButton.title = "delete comment";
       deleteButton.addEventListener("click", () => {
+        if (editingCommentId === comment.id) {
+          editingCommentId = null;
+          activeSelection = null;
+          issueTitle.value = "";
+          editor.value = "";
+          addButton.textContent = "Add Comment";
+        }
         const commentIndex = comments.findIndex(
           (saved) => saved.id === comment.id,
         );
@@ -716,7 +756,7 @@ function initCommentButton(doc = document) {
         renderComments();
       });
 
-      actions.append(showButton, deleteButton);
+      actions.append(showButton, editButton, deleteButton);
       headerRow.append(commentType, actions);
       item.append(headerRow, content);
       commentsList.append(item);
@@ -733,16 +773,28 @@ function initCommentButton(doc = document) {
   function commitCurrentComment() {
     if (!editor.value.trim()) return false;
     const selection = activeSelection || captureSelection();
-    comments.push({
-      id: nextCommentId++,
+    const editedComment = comments.find(
+      (comment) => comment.id === editingCommentId,
+    );
+    const updatedComment = {
+      id: editedComment?.id ?? nextCommentId++,
       type: selectedType(),
+      title: issueTitle.value.trim(),
       text: editor.value,
       selection: selection.text,
       range: selection.range,
-    });
+    };
+    if (editedComment) {
+      Object.assign(editedComment, updatedComment);
+    } else {
+      comments.push(updatedComment);
+    }
+    editingCommentId = null;
     sortComments();
     updateSelectionHighlights();
+    issueTitle.value = "";
     editor.value = "";
+    addButton.textContent = "Add Comment";
     renderComments();
     return true;
   }
@@ -798,9 +850,14 @@ function initCommentButton(doc = document) {
       doc.body.classList.replace("toc-inline", "toc-sidebar");
       changedTocLayout = false;
     }
+    const wasEditing = editingCommentId !== null;
+    editingCommentId = null;
+    issueTitle.value = "";
     editor.value = "";
+    addButton.textContent = "Add Comment";
     activeSelection = null;
     updateActionButtons();
+    if (wasEditing) renderComments();
     setShift(0);
     adjustToc(0);
     button.focus({ preventScroll: true });
@@ -850,6 +907,12 @@ function initCommentButton(doc = document) {
   addButton.addEventListener("click", addComment);
   editor.addEventListener("input", updateActionButtons);
   editor.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && event.ctrlKey) {
+      event.preventDefault();
+      addComment();
+    }
+  });
+  issueTitle.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && event.ctrlKey) {
       event.preventDefault();
       addComment();
