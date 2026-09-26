@@ -163,7 +163,7 @@
     flex-direction: column;
     gap: 12px;
     padding: 16px;
-    overflow: auto;
+    overflow: hidden;
     resize: horizontal;
     color: var(--text-color, #222);
     background: var(--background-color, #fff);
@@ -177,6 +177,7 @@
 
     > header {
       display: flex;
+      flex: none;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
@@ -197,6 +198,7 @@
 
     > fieldset {
       display: flex;
+      flex: none;
       flex-wrap: wrap;
       gap: 6px;
       margin: 0;
@@ -230,6 +232,7 @@
     }
 
     > input[type="text"] {
+      flex: none;
       box-sizing: border-box;
       width: 100%;
       font: inherit;
@@ -242,6 +245,7 @@
     }
 
     > textarea {
+      flex: none;
       box-sizing: border-box;
       width: 100%;
       min-height: 10em;
@@ -249,12 +253,14 @@
       font: inherit;
 
       + button {
+        flex: none;
         align-self: flex-end;
       }
     }
 
     > footer {
       display: flex;
+      flex: none;
       flex-wrap: wrap;
       justify-content: flex-end;
       gap: 8px;
@@ -264,17 +270,27 @@
     }
 
     [role="list"] {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+
       > div {
         display: flex;
         flex-direction: column;
         gap: 8px;
-        padding: 8px 0 8px 8px;
+        padding: 8px;
         border-left: 3px solid var(--type-color, transparent);
 
         &.is-editing {
           background: rgba(125 125 125 0.4);
           outline: 2px solid currentColor;
-          outline-offset: 2px;
+          outline-offset: -5px;
+
+          &>header::before {
+            content: "✏️";
+          }
         }
 
         header {
@@ -285,10 +301,14 @@
         }
 
         pre {
+          width: 100%;
           margin: 0;
+          padding: 2px;
           white-space: pre-wrap;
           overflow-wrap: anywhere;
           font: inherit;
+          background: transparent;
+          border: none;
         }
 
         [role="group"] {

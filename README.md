@@ -27,6 +27,13 @@ View a sample usage on copies of
 [an IETF spec](https://martinthomson.github.io/spec-comment/sample-ietf.html)
 or [a W3C spec](https://martinthomson.github.io/spec-comment/sample-w3c.html).
 
+## Install the browser extension
+
+A version of this extension is available in various stores:
+
+[Firefox](https://addons.mozilla.org/en-US/firefox/addon/spec-comment/)
+[Chrome and Edge and maybe Brave](https://chromewebstore.google.com/detail/spec-comment/ppogjdcogclebjhpeeknknimojondhlm)
+
 ## Debugging the extension
 
 ### Firefox

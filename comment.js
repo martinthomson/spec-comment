@@ -584,9 +584,9 @@ function initCommentButton(doc = document) {
           doc.defaultView.Range.START_TO_START,
           b.range,
         );
-        if (position) return position;
+        if (position) return -position;
       } else if (a.range || b.range) {
-        return a.range ? -1 : 1;
+        return a.range ? 1 : -1;
       }
       return a.id - b.id;
     });
